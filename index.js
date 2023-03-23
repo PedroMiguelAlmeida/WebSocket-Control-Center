@@ -20,6 +20,7 @@ wss.on('connection', function connection(ws) {
     })
   })
 
+//mounting http server for index.html
 fs.readFile('./index.html',function(error,html){
   if(error) throw error;
   http.createServer(function(request, response){
