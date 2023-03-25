@@ -37,8 +37,10 @@
       ws = new WebSocket('ws://localhost:3002');
       ws.onopen = () => {
         console.log('Connection opened!');
+
       }
       ws.onmessage = ({ data }) => showMessage(data);
+      console.log(ws);
       ws.onclose = function() {
         ws = null;
       }
