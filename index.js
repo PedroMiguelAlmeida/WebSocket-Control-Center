@@ -80,10 +80,12 @@ function getSupportedMessageType(message) {
   switch (messageType) {
     case 'string':
       return 'string';
-    case 'integer':
-      return 'integer';
-    case 'float':
-      return 'float';
+    case 'number':
+      return 'number';
+    // case 'integer':
+    //   return 'integer';
+    // case 'float': 
+    //   return 'float';
     default:
       throw new Error(`${messageType} is not supported`);
   }
@@ -92,34 +94,40 @@ function getSupportedMessageType(message) {
 wss.on('connection', function connection(ws) {
   //console.log(`Length before sending a new message ${sentDataHistory.length}`);
   ws.on('message', function incoming(data) {
-    parseData = JSON.parse(data);
-    sentDataHistory.push(parseData);
+    parsedData = JSON.parse(data);
+    sentDataHistory.push(parsedData);
     //console.log(`Data history: ${sentDataHistory.toString()}`);
     // console.log(`Data type ${typeof(sentDataHistory)}`)
     // console.log(`Length after sending a new message ${sentDataHistory.length}`);
-    console.log(parseData);
-    const schema = {
+    //console.log(parsedData);
+    console.log(sentDataHistory[0].payload.message);
+    console.log(getSupportedMessageType(sentDataHistory[0].payload.message));
+    let schema = {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "required": ["payload"],
       "properties": {
         "payload": {
           "type": "object",
           "required": ["user", "message"],
-          "user": {
-            "description": "Identifies the user",
-            "type": "string"
-          },
-          "message": {
-            "description": "the message itself",
-            "type": getSupportedMessageType(sentDataHistory[0].payload.message)
+          "properties": {
+            "user": {
+              "description": "Identifies the user",
+              "type": "string"
+            },
+            "message": {
+              "description": "the message itself",
+              "type": getSupportedMessageType(sentDataHistory[0].payload.message)
+            }
           }
-        }
+        },
       }
     }
-    let validateResolve = validator.validate(parseData, schema);
+    let validateResolve = validator.validate(parsedData, schema);
     // console.log(`VALIDATION ${validateResolve.valid}`);
-    // console.log(validateResolve.errors);
-    // console.log(schema);
+    console.log(validateResolve.errors);
+    console.log(schema.properties.payload);
+    console.log(parsedData);
     if (!validateResolve.valid) {
       ws.send(JSON.stringify({
         "type": "error",
@@ -134,7 +142,8 @@ wss.on('connection', function connection(ws) {
       if (client != ws && client.readyState === WebSocket.OPEN) {
         //client.send(data.toString());
         // client.send(JSON.parse(data).payload.message);
-        client.send(JSON.stringify(parseData));
+        console.log(sentDataHistory[0].payload.message);
+        client.send(JSON.stringify(parsedData));
         console.log(`Data sent by client: ${data}`)
       }
     })
