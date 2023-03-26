@@ -52,7 +52,17 @@
         return ;
       }
 
-      ws.send(messageBox.value);
+      // ws.send(messageBox.value);
+      ws.send(JSON.stringify({
+        dataInfo:{
+          dataContext: "message",
+          typeOfData: typeof(messageBox.value),
+        },
+        payload: {
+          user: "teste",
+          message: messageBox.value
+        }
+      }));
       showMessage(messageBox.value);
     }
 
