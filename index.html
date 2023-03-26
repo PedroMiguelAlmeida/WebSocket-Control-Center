@@ -25,7 +25,7 @@
     function showMessage(message) {
       messages.textContent += `\n\n${message}`;
       messages.scrollTop = messages.scrollHeight;
-      messageBox.value = '';
+      messageBox.value = '';  
     }
 
     function init() {
@@ -39,7 +39,18 @@
         console.log('Connection opened!');
 
       }
-      ws.onmessage = ({ data }) => showMessage(data);
+      ws.onmessage = ({ data }) => {
+        const parseData = JSON.parse(data.toString());
+        console.log(parseData);
+        if (parseData.type === "error") {
+          alert(parseData.payload.message);
+          // console.log(data);
+        }
+        else if (parseData.type === "message"){
+          showMessage(parseData.payload.message);
+        }
+        
+      }
       console.log(ws);
       ws.onclose = function() {
         ws = null;
@@ -54,10 +65,7 @@
 
       // ws.send(messageBox.value);
       ws.send(JSON.stringify({
-        dataInfo:{
-          dataContext: "message",
-          typeOfData: typeof(messageBox.value),
-        },
+        type: "message",
         payload: {
           user: "teste",
           message: messageBox.value
