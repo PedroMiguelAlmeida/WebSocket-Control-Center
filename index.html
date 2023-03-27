@@ -38,7 +38,11 @@
       ws.onopen = () => {
         console.log('Connection opened!');
       }
-      ws.onmessage = ({ data }) => showMessage(data);
+      
+      //ws.onmessage = ({ data }) => showMessage(data);
+      ws.onmessage = (e) => {
+        console.log(e);
+      };
       ws.onclose = function() {
         ws = null;
       }
