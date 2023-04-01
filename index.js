@@ -7,7 +7,7 @@ const WebSocket = require('ws')
 const PORT = 8080;
 const wss = new WebSocket.Server({port:3002})
 
-var rooms = [{room : "room1"}]
+var rooms = [{room : "room1", clients: []}]
 var id = 0
 
 
@@ -32,27 +32,20 @@ wss.on('connection', function connection(ws, req) {
       }
 
       var room = rooms.find(obj => { return obj.room === dataObj.room })
-      //console.log("room - " + JSON.stringify(room));
       if(room){
         room.clients = room.clients || []
         var client = room.clients.find(obj => { return obj === ws })
-        if(!client)
+        if(!client){
           room.clients.push(ws)
+          broadcast(room, ws, "Client joined room!!")
+        }
       }else{
         rooms.push({ room : dataObj.room, clients : [ws] })
         room = { room : dataObj.room, clients : [ws] }
       }
-      //console.debug("rooms - " + JSON.stringify(rooms));
 
-      room.clients.forEach(function each(client) {
-        if (client != ws && client.readyState === WebSocket.OPEN) {
-          client.send(dataObj.data);
-          console.log("Data sent to client:"+dataObj.data);
-        }
-        if (client == ws && client.readyState === WebSocket.OPEN) {
-          client.send("Data sent to clients successfully!");
-        }
-      })
+      broadcast(room, ws, dataObj.data)
+      ws.send("Success - msg sent to room!");
     }
     catch(error){
       console.error(error);
@@ -72,6 +65,15 @@ wss.on('connection', function connection(ws, req) {
       console.log("Client "+ws.id+" removed from all rooms");
     })
   })
+
+  function broadcast(room, msgClient, msg){
+    room.clients.forEach(function each(client) {
+      if (client != msgClient && client.readyState === WebSocket.OPEN) {
+        client.send(msg);
+        console.log("Data sent to client:"+msg.toString());
+      }
+    })
+  }
 
 
 //mounting http server for index.html
