@@ -39,7 +39,7 @@
         console.log('Connection opened!');
       }
       
-      //ws.onmessage = ({ data }) => showMessage(data);
+      ws.onmessage = ({ data }) => showMessage(data);
       ws.onmessage = (e) => {
         console.log(e);
       };
@@ -53,8 +53,7 @@
         showMessage("No WebSocket connection");
         return ;
       }
-
-      ws.send(messageBox.value);
+      ws.send({ room : "room1", data : messageBox.value });
       showMessage(messageBox.value);
     }
 
