@@ -25,8 +25,19 @@
     function showMessage(message) {
       messages.textContent += `\n\n${message}`;
       messages.scrollTop = messages.scrollHeight;
-      messageBox.value = '';
+      messageBox.value = '';  
     }
+
+    function identifyMessageType(message) {
+        if (parseInt(message)==message) {
+          return parseInt(message);
+        }
+        if (parseFloat(message)==message) {
+            return parseFloat(message);
+        }
+        //by default message is always a string since messageBox always posts a string.
+        return message; 
+      }
 
     function init() {
       if (ws) {
@@ -37,12 +48,21 @@
       ws = new WebSocket('ws://localhost:3002');
       ws.onopen = () => {
         console.log('Connection opened!');
+
       }
-      
-      ws.onmessage = ({ data }) => showMessage(data);
-      ws.onmessage = (e) => {
-        console.log(e);
-      };
+      ws.onmessage = ({ data }) => {
+        const parseData = JSON.parse(data.toString());
+        console.log(parseData);
+        if (parseData.type === "error") {
+          alert(parseData.payload.message);
+          // console.log(data);
+        }
+        else if (parseData.type === "message"){
+          showMessage(parseData.payload.message);
+        }
+        
+      }
+      console.log(ws);
       ws.onclose = function() {
         ws = null;
       }
@@ -53,8 +73,22 @@
         showMessage("No WebSocket connection");
         return ;
       }
-      ws.send({ room : "room1", data : messageBox.value });
-      showMessage(messageBox.value);
+
+      // ws.send(messageBox.value);
+      let message = messageBox.value;
+      let identifiedMessage = identifyMessageType(message);
+      console.log(identifiedMessage);
+      console.log(typeof(identifiedMessage));
+        
+      
+      ws.send(JSON.stringify({
+        room: "test1",
+        type: "message",        
+        payload: {
+          msg: identifiedMessage
+        }
+      }));
+      showMessage(identifiedMessage);
     }
 
     init();
