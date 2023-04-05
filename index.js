@@ -1,12 +1,14 @@
 
 
-const http = require('http')
-const fs = require('fs')
-const WebSocket = require('ws')
+import { http } from 'http'
+import { fs } from 'fs'
+import { WebSocket } from 'ws'
+import { express } from 'express'
 
 
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
+const app = express()
 
 var rooms = [{ room: "room1", clients: [] }]
 var id = 0
@@ -16,23 +18,6 @@ let sentDataHistory = new Array();
 
 var Validator = require('jsonschema').Validator;
 var validator = new Validator();
-
-function getSupportedMessageType(message) {
-  const messageType = typeof (message);
-  switch (messageType) {
-    case 'string':
-      return 'string';
-    case 'number':
-      return 'number';
-    // case 'integer':
-    //   return 'integer';
-    // case 'float': 
-    //   return 'float';
-    default:
-      throw new Error(`${messageType} is not supported`);
-  }
-}
-
 
 wss.on('connection', function connection(ws, req) {
   id++
@@ -58,11 +43,13 @@ wss.on('connection', function connection(ws, req) {
         "properties": {
           "room": {
             "description": "Room name",
-            "type": "string"
+            "type": "string",
+            "minLength": 4
           },
           "type": {
             "description": "Payload message type",
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "payload": {
             "type": "object",
@@ -70,11 +57,13 @@ wss.on('connection', function connection(ws, req) {
             "properties": {
               "user": {
                 "description": "Identifies the user",
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               "msg": {
                 "description": "the message itself",
-                "type": getSupportedMessageType(sentDataHistory[0].payload.message)
+                "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
+                "minLength": 1
               }
             }
           },
@@ -83,13 +72,13 @@ wss.on('connection', function connection(ws, req) {
 
       let validateResolve = validator.validate(dataObj, schema);
       if (!validateResolve.valid) {
-        ws.send({
+        ws.send(JSON.stringify({
           "type": "error",
           "room": dataObj.room,
           "payload": {
             "msg": "Message format is not valid!!"
           }
-        })
+        }))
         throw "Error - validation failed";
       }
 
@@ -115,7 +104,7 @@ wss.on('connection', function connection(ws, req) {
         room = { room: dataObj.room, clients: [ws] }
       }
 
-      broadcast(dataObj, ws)
+      broadcast(room, dataObj, ws)
       console.log("Success - msg sent to room!");
     }
     catch (error) {
@@ -141,10 +130,22 @@ wss.on('connection', function connection(ws, req) {
 function broadcast(room, msg, msgClient) {
   room.clients.forEach(function each(client) {
     if (client != msgClient && client.readyState === WebSocket.OPEN) {
-      client.send(msg);
-      console.log("Data sent to client: " + msg.toString());
+      client.send(JSON.stringify(msg))
+      console.log("Data sent to client: " + msg.toString())
     }
   })
+}
+
+function getSupportedMessageType(message) {
+  const messageType = typeof (message);
+  switch (messageType) {
+    case 'string':
+      return 'string';
+    case 'number':
+      return 'number';
+    default:
+      throw new Error(`${messageType} is not supported`);
+  }
 }
 
 //mounting http server for index.html
