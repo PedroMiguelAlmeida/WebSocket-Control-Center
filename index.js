@@ -10,7 +10,7 @@ const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
 const app = express()
 
-var rooms = [{ room: "room1", clients: [] }]
+var rooms = [{ room: "room1",schema:"", clients: [] }]
 var id = 0
 
 let sentDataHistory = new Array();
