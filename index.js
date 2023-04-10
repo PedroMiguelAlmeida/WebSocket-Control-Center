@@ -1,9 +1,10 @@
 
 
-import { http } from 'http'
-import { fs } from 'fs'
-import { WebSocket } from 'ws'
-import { express } from 'express'
+
+const http = require('http');
+const fs = require('fs');
+const WebSocket = require('ws');
+const express = require('express')
 
 
 const PORT = 8080;
@@ -39,17 +40,12 @@ wss.on('connection', function connection(ws, req) {
       let schema = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
-        "required": ["room", "type", "payload"],
+        "required": ["room","payload"],
         "properties": {
           "room": {
             "description": "Room name",
             "type": "string",
             "minLength": 4
-          },
-          "type": {
-            "description": "Payload message type",
-            "type": "string",
-            "minLength": 1
           },
           "payload": {
             "type": "object",
@@ -90,14 +86,14 @@ wss.on('connection', function connection(ws, req) {
         if (!client) {
           room.clients.push(ws)
 
-          let msg = {
-            "type": "message",
-            "room": dataObj.room,
-            "payload": {
-              "message": "Client joined room!!"
-            }
-          }
-          broadcast(room, msg, ws)
+          // let msg = {
+          //   "type": "message",
+          //   "room": dataObj.room,
+          //   "payload": {
+          //     "message": "Client joined room!!"
+          //   }
+          // }
+          broadcast(room, dataObj, ws)
         }
       } else {
         rooms.push({ room: dataObj.room, clients: [ws] })
@@ -127,11 +123,11 @@ wss.on('connection', function connection(ws, req) {
   })
 })
 
-function broadcast(room, msg, msgClient) {
+function broadcast(room, dataObj, msgClient) {
   room.clients.forEach(function each(client) {
     if (client != msgClient && client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(msg))
-      console.log("Data sent to client: " + msg.toString())
+      client.send(JSON.stringify(dataObj.payload.msg))
+      console.log("Data sent to client: " + JSON.stringify(dataObj.payload.msg))
     }
   })
 }

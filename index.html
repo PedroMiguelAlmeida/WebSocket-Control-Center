@@ -10,6 +10,7 @@
     <h1>Real Time Messaging</h1>
     <pre id="messages" style="height: 400px; overflow: scroll"></pre>
     <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+    <input type="text" id="roomBox" placeholder="Type the room you want to send the message to here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
     <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
 </body>
 
@@ -54,11 +55,11 @@
         const parseData = JSON.parse(data.toString());
         console.log(parseData);
         if (parseData.type === "error") {
-          alert(parseData.payload.message);
+          alert(parseData.payload.msg);
           // console.log(data);
         }
         else if (parseData.type === "message"){
-          showMessage(parseData.payload.message);
+          showMessage(parseData.payload.msg);
         }
         
       }
@@ -76,13 +77,14 @@
 
       // ws.send(messageBox.value);
       let message = messageBox.value;
+      let room = roomBox.value;
       let identifiedMessage = identifyMessageType(message);
       console.log(identifiedMessage);
       console.log(typeof(identifiedMessage));
         
       
       ws.send(JSON.stringify({
-        room: "test1",
+        room: room,
         type: "message",        
         payload: {
           msg: identifiedMessage
