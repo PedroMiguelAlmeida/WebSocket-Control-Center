@@ -18,8 +18,6 @@ const wss = new WebSocket.Server({ port: 3002 })
 const app = express()
 
 
-
-
 var rooms = [{ room: "room1", schema: "", clients: [] }]
 var id = 0
 
@@ -52,9 +50,7 @@ wss.on('connection', function connection(ws, req) {
           "required": ["room", "payload"],
           "properties": {
             "room": {
-              "description": "Room name",
-              "type": "string",
-              "minLength": 4
+              "$ref": "#/$defs/room"
             },
             "payload": {
               "type": "object",
@@ -72,6 +68,13 @@ wss.on('connection', function connection(ws, req) {
                 }
               }
             },
+          },
+          "$defs":{
+            "room":{
+              "description": "Room name",
+              "type": "string",
+              "minLength": 4
+            }
           }
         }
       }
