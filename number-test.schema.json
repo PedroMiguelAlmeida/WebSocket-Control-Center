@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["room","payload"],
+    "properties": {
+      "room": {
+        "description": "Room name",
+        "type": "string",
+        "minLength": 4
+      },
+      "payload": {
+        "type": "object",
+        "required": ["msg"],
+        "properties": {
+          "user": {
+            "description": "Identifies the user",
+            "type": "string",
+            "minLength": 1
+          },
+          "msg": {
+            "description": "the message itself",
+            "type": "number",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }

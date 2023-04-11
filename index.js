@@ -6,12 +6,21 @@ const fs = require('fs');
 const WebSocket = require('ws');
 const express = require('express')
 
+const uploadSchemaFlag = false;
+let schema = null;
+if (uploadSchemaFlag) {
+  schema = require('./number-test.schema.json')
+}
+
 
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
 const app = express()
 
-var rooms = [{ room: "room1",schema:"", clients: [] }]
+
+
+
+var rooms = [{ room: "room1", schema: "", clients: [] }]
 var id = 0
 
 let sentDataHistory = new Array();
@@ -36,35 +45,37 @@ wss.on('connection', function connection(ws, req) {
       dataObj = JSON.parse(data);
 
       sentDataHistory.push(dataObj);
-
-      let schema = {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "required": ["room","payload"],
-        "properties": {
-          "room": {
-            "description": "Room name",
-            "type": "string",
-            "minLength": 4
-          },
-          "payload": {
-            "type": "object",
-            "required": ["msg"],
-            "properties": {
-              "user": {
-                "description": "Identifies the user",
-                "type": "string",
-                "minLength": 1
-              },
-              "msg": {
-                "description": "the message itself",
-                "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
-                "minLength": 1
+      if (!uploadSchemaFlag) {
+        schema = {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "required": ["room", "payload"],
+          "properties": {
+            "room": {
+              "description": "Room name",
+              "type": "string",
+              "minLength": 4
+            },
+            "payload": {
+              "type": "object",
+              "required": ["msg"],
+              "properties": {
+                "user": {
+                  "description": "Identifies the user",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "msg": {
+                  "description": "the message itself",
+                  "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
+                  "minLength": 1
+                }
               }
-            }
-          },
+            },
+          }
         }
       }
+
 
       let validateResolve = validator.validate(dataObj, schema);
       if (!validateResolve.valid) {
@@ -85,14 +96,6 @@ wss.on('connection', function connection(ws, req) {
         var client = room.clients.find(obj => { return obj === ws })
         if (!client) {
           room.clients.push(ws)
-
-          // let msg = {
-          //   "type": "message",
-          //   "room": dataObj.room,
-          //   "payload": {
-          //     "message": "Client joined room!!"
-          //   }
-          // }
           broadcast(room, dataObj, ws)
         }
       } else {
