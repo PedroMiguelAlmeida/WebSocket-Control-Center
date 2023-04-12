@@ -1,10 +1,8 @@
 
-
-import { http } from 'http'
-import { fs } from 'fs'
-import { WebSocket } from 'ws'
-import { express } from 'express'
-
+const http = require('http');
+const fs = require('fs');
+const WebSocket = require('ws');
+const express = require('express')
 
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
