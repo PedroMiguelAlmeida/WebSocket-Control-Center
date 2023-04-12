@@ -9,6 +9,14 @@ import { express } from 'express'
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
 const app = express()
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
 
 var rooms = [{ room: "room1", clients: [] }]
 var id = 0
@@ -20,6 +28,8 @@ var Validator = require('jsonschema').Validator;
 var validator = new Validator();
 
 wss.on('connection', function connection(ws, req) {
+  ws.isAlive = true
+  ws.on('pong',heartbeat)
   id++
   ws.id = id
 
@@ -115,6 +125,7 @@ wss.on('connection', function connection(ws, req) {
 
   ws.on('close', () => {
     console.log("Connection closed - Client " + ws.id)
+    clearInterval(interval);
 
     rooms.forEach((room) => {
       room.clients = room.clients.filter(function (obj) {
@@ -134,6 +145,10 @@ function broadcast(room, msg, msgClient) {
       console.log("Data sent to client: " + msg.toString())
     }
   })
+}
+
+function heartbeat() {
+  this.isAlive = true;
 }
 
 function getSupportedMessageType(message) {

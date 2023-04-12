@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WSTest</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WSTest</title>
 </head>
+
 <body>
-    <h1>Real Time Messaging</h1>
-    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
-    <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
-    <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
+  <h1>Real Time Messaging</h1>
+  <pre id="messages" style="height: 400px; overflow: scroll"></pre>
+  <input type="text" id="messageBox" placeholder="Type your message here"
+    style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+  <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
 </body>
 
 
 <script>
-  (function() {
+  (function () {
     const sendBtn = document.querySelector('#send');
     const messages = document.querySelector('#messages');
     const messageBox = document.querySelector('#messageBox');
@@ -25,19 +28,31 @@
     function showMessage(message) {
       messages.textContent += `\n\n${message}`;
       messages.scrollTop = messages.scrollHeight;
-      messageBox.value = '';  
+      messageBox.value = '';
     }
 
     function identifyMessageType(message) {
-        if (parseInt(message)==message) {
-          return parseInt(message);
-        }
-        if (parseFloat(message)==message) {
-            return parseFloat(message);
-        }
-        //by default message is always a string since messageBox always posts a string.
-        return message; 
+      if (parseInt(message) == message) {
+        return parseInt(message);
       }
+      if (parseFloat(message) == message) {
+        return parseFloat(message);
+      }
+      //by default message is always a string since messageBox always posts a string.
+      return message;
+    }
+
+    function heartbeat() {
+      clearTimeout(this.pingTimeout);
+
+      // Use `WebSocket#terminate()`, which immediately destroys the connection,
+      // instead of `WebSocket#close()`, which waits for the close timer.
+      // Delay should be equal to the interval at which your server
+      // sends out pings plus a conservative assumption of the latency.
+      this.pingTimeout = setTimeout(() => {
+        this.terminate();
+      }, 30000 + 1000);
+    }
 
     function init() {
       if (ws) {
@@ -48,6 +63,7 @@
       ws = new WebSocket('ws://localhost:3002');
       ws.onopen = () => {
         console.log('Connection opened!');
+        heartbeat;
 
       }
       ws.onmessage = ({ data }) => {
@@ -57,33 +73,35 @@
           alert(parseData.payload.message);
           // console.log(data);
         }
-        else if (parseData.type === "message"){
+        else if (parseData.type === "message") {
           showMessage(parseData.payload.message);
         }
-        
+
       }
       console.log(ws);
-      ws.onclose = function() {
+      ws.on('ping',heartbeat);
+      ws.onclose = function () {
+        heartbeat;
         ws = null;
       }
     }
 
-    sendBtn.onclick = function() {
+    sendBtn.onclick = function () {
       if (!ws) {
         showMessage("No WebSocket connection");
-        return ;
+        return;
       }
 
       // ws.send(messageBox.value);
       let message = messageBox.value;
       let identifiedMessage = identifyMessageType(message);
       console.log(identifiedMessage);
-      console.log(typeof(identifiedMessage));
-        
-      
+      console.log(typeof (identifiedMessage));
+
+
       ws.send(JSON.stringify({
         room: "test1",
-        type: "message",        
+        type: "message",
         payload: {
           msg: identifiedMessage
         }
@@ -94,4 +112,5 @@
     init();
   })();
 </script>
+
 </html>
