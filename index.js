@@ -1,23 +1,42 @@
 
+const fs = require('fs');
+const express = require('express');
+const bodyParser = require('body-parser')
+const app = express();
+const server = require('http').createServer(app);
+const Websocket = require('ws');
 
-import { http } from 'http'
-import { fs } from 'fs'
-import { WebSocket } from 'ws'
-import { express } from 'express'
+const wss = new Websocket.Server({ port: 3001 })
 
-
-const PORT = 8080;
-const wss = new WebSocket.Server({ port: 3002 })
-const app = express()
-
-var rooms = [{ room: "room1", clients: [] }]
-var id = 0
+let rooms = [{ room: "room1", clients: [], schema: null }];
+let id = 0
 
 let sentDataHistory = new Array();
 
-
 var Validator = require('jsonschema').Validator;
 var validator = new Validator();
+
+app.use(bodyParser.json());
+
+app.post('/schema', (req, res) => {
+  try {
+    let schema = req.body.schema;
+    let roomName = req.body.room;
+
+    if(schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
+      throw 'Schema is not valid!';
+    
+    var room = rooms.find(obj => { return obj.room === roomName })
+    if(room)
+      room.schema = schema;    
+    else 
+      rooms.push({ room: roomName, clients: [], schema: schema })
+    
+    res.send('Schema saved!')
+  } catch (err) {
+    res.status(400).send(err);
+  }
+})
 
 wss.on('connection', function connection(ws, req) {
   id++
@@ -100,8 +119,8 @@ wss.on('connection', function connection(ws, req) {
           broadcast(room, msg, ws)
         }
       } else {
-        rooms.push({ room: dataObj.room, clients: [ws] })
-        room = { room: dataObj.room, clients: [ws] }
+        room = { room: dataObj.room, clients: [ws], schema: null }
+        rooms.push(room)        
       }
 
       broadcast(room, dataObj, ws)
@@ -149,12 +168,13 @@ function getSupportedMessageType(message) {
 }
 
 //mounting http server for index.html
-fs.readFile('./index.html', function (error, html) {
-  if (error) throw error;
-  http.createServer(function (request, response) {
-    response.writeHead(200, { 'Content-Type': 'text/html' });
-    response.write(html);
-    response.end();
-  }).listen(PORT);
-});
+// fs.readFile('./index.html', function (error, html) {
+//   if (error) throw error;
+//   http.createServer(function (request, response) {
+//     response.writeHead(200, { 'Content-Type': 'text/html' });
+//     response.write(html);
+//     response.end();
+//   }).listen(PORT);
+// });
 
+server.listen(8080, () => { console.log('Listening on :3000') })
