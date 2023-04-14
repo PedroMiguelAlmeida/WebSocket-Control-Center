@@ -1,6 +1,0 @@
-{   
-    "$id": "file:///C:/Users/pedro/Proj/ws/schemas/room.schema.json",
-    "description": "Room name",
-    "type": "string",
-    "minLength": 4
-}
