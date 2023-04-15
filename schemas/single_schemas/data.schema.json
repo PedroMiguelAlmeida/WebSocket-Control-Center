@@ -7,7 +7,7 @@
       "data":{
         "description":"Data",
         "type":"string",
-        "minLength":"1"
+        "minLength":1
       }      
     }
   }

@@ -12,6 +12,8 @@ if (uploadSchemaFlag) {
   schema = require('./number-test.schema.json')
 }
 
+let roomSchema = require('./schemas/single_schemas/room.schema.json')
+let dataSchema = require('./schemas/single_schemas/data.schema.json')
 
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: 3002 })
@@ -26,6 +28,8 @@ let sentDataHistory = new Array();
 
 var Validator = require('jsonschema').Validator;
 var validator = new Validator();
+validator.addSchema(roomSchema,'/room')
+validator.addSchema(dataSchema,'/data')
 
 wss.on('connection', function connection(ws, req) {
   id++
@@ -45,42 +49,65 @@ wss.on('connection', function connection(ws, req) {
       sentDataHistory.push(dataObj);
       if (!uploadSchemaFlag) {
         schema = {
+
+          "$id": "/final",
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "required": ["room", "payload"],
           "properties": {
             "room": {
-              "$ref": "#/$defs/room"
+              "$ref": "/room#name"
             },
             "payload": {
               "type": "object",
               "required": ["msg"],
               "properties": {
-                "user": {
-                  "description": "Identifies the user",
-                  "type": "string",
-                  "minLength": 1
-                },
                 "msg": {
-                  "description": "the message itself",
-                  "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
-                  "minLength": 1
+                  "$ref": "/data#data"
                 }
               }
-            },
-          },
-          "$defs":{
-            "room":{
-              "description": "Room name",
-              "type": "string",
-              "minLength": 4
             }
           }
+
+
         }
+        // schema = {
+        //   "$schema": "https://json-schema.org/draft/2020-12/schema",
+        //   "type": "object",
+        //   "required": ["room", "payload"],
+        //   "properties": {
+        //     "room": {
+        //       "$ref": "#/$defs/room"
+        //     },
+        //     "payload": {
+        //       "type": "object",
+        //       "required": ["msg"],
+        //       "properties": {
+        //         "user": {
+        //           "description": "Identifies the user",
+        //           "type": "string",
+        //           "minLength": 1
+        //         },
+        //         "msg": {
+        //           "description": "the message itself",
+        //           "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
+        //           "minLength": 1
+        //         }
+        //       }
+        //     },
+        //   },
+        //   "$defs":{
+        //     "room":{
+        //       "description": "Room name",
+        //       "type": "string",
+        //       "minLength": 4
+        //     }
+        //   }
+        // }
       }
 
 
-      let validateResolve = validator.validate(dataObj, schema);
+      let validateResolve = validator.validate(dataObj,schema);
       if (!validateResolve.valid) {
         ws.send(JSON.stringify({
           "type": "error",
