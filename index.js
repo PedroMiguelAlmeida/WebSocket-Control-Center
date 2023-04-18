@@ -1,4 +1,5 @@
 
+
 const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser')
@@ -8,13 +9,24 @@ const Websocket = require('ws');
 
 const wss = new Websocket.Server({ port: 3001 })
 
+let roomSchema = require('./schemas/single_schemas/room.schema.json')
+let dataSchema = require('./schemas/single_schemas/data.schema.json')
+let schema = require('./schemas/composite_schemas/final.schema.json')
+
+
+validator.addSchema(schema,'/final')
+validator.addSchema(roomSchema,'/room')
+validator.addSchema(dataSchema,'/data')
+
 let rooms = [{ room: "room1", clients: [], schema: null }];
-let id = 0
+var id = 0
 
 let sentDataHistory = new Array();
 
+
 var Validator = require('jsonschema').Validator;
 var validator = new Validator();
+
 
 app.use(bodyParser.json());
 
@@ -53,43 +65,7 @@ wss.on('connection', function connection(ws, req) {
     try {
       dataObj = JSON.parse(data);
 
-      sentDataHistory.push(dataObj);
-
-      let schema = {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "required": ["room", "type", "payload"],
-        "properties": {
-          "room": {
-            "description": "Room name",
-            "type": "string",
-            "minLength": 4
-          },
-          "type": {
-            "description": "Payload message type",
-            "type": "string",
-            "minLength": 1
-          },
-          "payload": {
-            "type": "object",
-            "required": ["msg"],
-            "properties": {
-              "user": {
-                "description": "Identifies the user",
-                "type": "string",
-                "minLength": 1
-              },
-              "msg": {
-                "description": "the message itself",
-                "type": getSupportedMessageType(sentDataHistory[0].payload.msg),
-                "minLength": 1
-              }
-            }
-          },
-        }
-      }
-
-      let validateResolve = validator.validate(dataObj, schema);
+      let validateResolve = validator.validate(dataObj,schema);
       if (!validateResolve.valid) {
         ws.send(JSON.stringify({
           "type": "error",
@@ -108,15 +84,7 @@ wss.on('connection', function connection(ws, req) {
         var client = room.clients.find(obj => { return obj === ws })
         if (!client) {
           room.clients.push(ws)
-
-          let msg = {
-            "type": "message",
-            "room": dataObj.room,
-            "payload": {
-              "message": "Client joined room!!"
-            }
-          }
-          broadcast(room, msg, ws)
+          broadcast(room, dataObj, ws)
         }
       } else {
         room = { room: dataObj.room, clients: [ws], schema: null }
@@ -146,11 +114,11 @@ wss.on('connection', function connection(ws, req) {
   })
 })
 
-function broadcast(room, msg, msgClient) {
+function broadcast(room, dataObj, msgClient) {
   room.clients.forEach(function each(client) {
     if (client != msgClient && client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(msg))
-      console.log("Data sent to client: " + msg.toString())
+      client.send(JSON.stringify(dataObj.payload.msg))
+      console.log("Data sent to client: " + JSON.stringify(dataObj.payload.msg))
     }
   })
 }
