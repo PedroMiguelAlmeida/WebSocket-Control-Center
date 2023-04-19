@@ -11,22 +11,39 @@ const wss = new Websocket.Server({ port: 3001 })
 
 let roomSchema = require('./schemas/single_schemas/room.schema.json')
 let dataSchema = require('./schemas/single_schemas/data.schema.json')
-let schema = require('./schemas/composite_schemas/final.schema.json')
+
+var Validator = require('jsonschema').Validator;
+var validator = new Validator();
+
+const schema = {
+  "$id": "/final",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["room", "payload"],
+  "properties": {
+    "room": {
+      "$ref": "/room#name"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["msg"],
+      "properties": {
+        "msg": {
+          "$ref": "/data#data"
+        }
+      }
+    }
+  }
+};
 
 
-validator.addSchema(schema,'/final')
-validator.addSchema(roomSchema,'/room')
-validator.addSchema(dataSchema,'/data')
+validator.addSchema(roomSchema, '/room')
+validator.addSchema(dataSchema, '/data')
 
 let rooms = [{ room: "room1", clients: [], schema: null }];
 var id = 0
 
 let sentDataHistory = new Array();
-
-
-var Validator = require('jsonschema').Validator;
-var validator = new Validator();
-
 
 app.use(bodyParser.json());
 
@@ -35,15 +52,15 @@ app.post('/schema', (req, res) => {
     let schema = req.body.schema;
     let roomName = req.body.room;
 
-    if(schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
+    if (schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
       throw 'Schema is not valid!';
-    
+
     var room = rooms.find(obj => { return obj.room === roomName })
-    if(room)
-      room.schema = schema;    
-    else 
+    if (room)
+      room.schema = schema;
+    else
       rooms.push({ room: roomName, clients: [], schema: schema })
-    
+
     res.send('Schema saved!')
   } catch (err) {
     res.status(400).send(err);
@@ -65,7 +82,7 @@ wss.on('connection', function connection(ws, req) {
     try {
       dataObj = JSON.parse(data);
 
-      let validateResolve = validator.validate(dataObj,schema);
+      let validateResolve = validator.validate(dataObj, schema);
       if (!validateResolve.valid) {
         ws.send(JSON.stringify({
           "type": "error",
@@ -88,7 +105,7 @@ wss.on('connection', function connection(ws, req) {
         }
       } else {
         room = { room: dataObj.room, clients: [ws], schema: null }
-        rooms.push(room)        
+        rooms.push(room)
       }
 
       broadcast(room, dataObj, ws)
