@@ -7,7 +7,7 @@ const app = express();
 const server = require('http').createServer(app);
 const Websocket = require('ws');
 
-const wss = new Websocket.Server({ port: 3001 })
+const wss = new Websocket.Server({ port: 3002 })
 console.log("Server listening on :3001")
 let roomSchema = require('./schemas/single_schemas/room.schema.json')
 let dataSchema = require('./schemas/single_schemas/data.schema.json')
@@ -22,14 +22,17 @@ const globalSchema = {
   "required": ["room", "payload"],
   "properties": {
     "room": {
-      "$ref": "/room#name"
+      "description":"Room Name",
+      "type":"string",
+      "minLength":4
     },
     "payload": {
       "type": "object",
       "required": ["msg"],
       "properties": {
         "msg": {
-          "$ref": "/data#data"
+          "description":"Data",
+          "type":"object"
         }
       }
     }
@@ -91,6 +94,7 @@ wss.on('connection', function connection(ws, req) {
         }))
         throw "Error - validation failed global schema check";
       }
+      var room = rooms.find(obj => { return obj.room === dataObj.room })
 
       //validatorRoomSchema
       let validateResolve = validator.validate(dataObj.payload.message, room.schema);
@@ -104,9 +108,9 @@ wss.on('connection', function connection(ws, req) {
         }))
         throw "Error - validation failed room schema check";
       }
+      room = rooms.find(obj => { return obj.room === dataObj.room })
 
       //room logic
-      var room = rooms.find(obj => { return obj.room === dataObj.room })
       if (room) {
         room.clients = room.clients || []
         var client = room.clients.find(obj => { return obj === ws })
@@ -118,7 +122,8 @@ wss.on('connection', function connection(ws, req) {
         room = { room: dataObj.room, clients: [ws], schema: null }
         rooms.push(room)
       }
-
+      console.log(room)
+      console.log(dataObj)
       broadcast(room, dataObj, ws)
       console.log("Success - msg sent to room!");
     }
