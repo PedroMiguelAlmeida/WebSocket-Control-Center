@@ -8,14 +8,14 @@ const server = require('http').createServer(app);
 const Websocket = require('ws');
 
 const wss = new Websocket.Server({ port: 3001 })
-
+console.log("Server listening on :3001")
 let roomSchema = require('./schemas/single_schemas/room.schema.json')
 let dataSchema = require('./schemas/single_schemas/data.schema.json')
 
 var Validator = require('jsonschema').Validator;
 var validator = new Validator();
 
-const schema = {
+const globalSchema = {
   "$id": "/final",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
@@ -43,8 +43,6 @@ validator.addSchema(dataSchema, '/data')
 let rooms = [{ room: "room1", clients: [], schema: null }];
 var id = 0
 
-let sentDataHistory = new Array();
-
 app.use(bodyParser.json());
 
 app.post('/schema', (req, res) => {
@@ -66,7 +64,7 @@ app.post('/schema', (req, res) => {
     res.status(400).send(err);
   }
 })
-
+console.log("server start");
 wss.on('connection', function connection(ws, req) {
   id++
   ws.id = id
@@ -81,8 +79,21 @@ wss.on('connection', function connection(ws, req) {
 
     try {
       dataObj = JSON.parse(data);
+      //validatorGlobalSchema 
+      let validateResolveGlobal = validator.validate(dataObj,globalSchema)
+      if (!validateResolveGlobal.valid) {
+        ws.send(JSON.stringify({
+          "type": "error",
+          "room": dataObj.room,
+          "payload": {
+            "msg": "Message format is not valid!! Global schema"
+          }
+        }))
+        throw "Error - validation failed global schema check";
+      }
 
-      let validateResolve = validator.validate(dataObj, schema);
+      //validatorRoomSchema
+      let validateResolve = validator.validate(dataObj.payload.message, room.schema);
       if (!validateResolve.valid) {
         ws.send(JSON.stringify({
           "type": "error",
@@ -91,7 +102,7 @@ wss.on('connection', function connection(ws, req) {
             "msg": "Message format is not valid!!"
           }
         }))
-        throw "Error - validation failed";
+        throw "Error - validation failed room schema check";
       }
 
       //room logic
@@ -162,4 +173,4 @@ function getSupportedMessageType(message) {
 //   }).listen(PORT);
 // });
 
-server.listen(8080, () => { console.log('Listening on :3000') })
+server.listen(8080, () => { console.log('Listening on :8080') })
