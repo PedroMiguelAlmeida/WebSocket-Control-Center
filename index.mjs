@@ -1,31 +1,34 @@
 
 
-const fs = require('fs');
-const express = require('express');
-const bodyParser = require('body-parser')
+
+import express from 'express';
+import bodyParser from 'body-parser';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import Rooms from './classes/rooms.mjs'
+
 const app = express();
-const server = require('http').createServer(app);
-const Websocket = require('ws');
+const server = createServer(app);
+const wss = new WebSocketServer({ port: 3001 });
 
-const wss = new Websocket.Server({ port: 3001 })
+const rooms = new Rooms();
 
-let roomSchema = require('./schemas/single_schemas/room.schema.json')
-let dataSchema = require('./schemas/single_schemas/data.schema.json')
-let schema = require('./schemas/composite_schemas/final.schema.json')
+// import roomSchema from './schemas/single_schemas/room.schema.json'
+// import dataSchema from './schemas/single_schemas/data.schema.json'
+// import schema from './schemas/composite_schemas/final.schema.json'
 
 
-validator.addSchema(schema,'/final')
-validator.addSchema(roomSchema,'/room')
-validator.addSchema(dataSchema,'/data')
+// validator.addSchema(schema,'/final')
+// validator.addSchema(roomSchema,'/room')
+// validator.addSchema(dataSchema,'/data')
 
-let rooms = [{ room: "room1", clients: [], schema: null }];
-var id = 0
+let id = 0
 
 let sentDataHistory = new Array();
 
 
-var Validator = require('jsonschema').Validator;
-var validator = new Validator();
+// var Validator = require('jsonschema').Validator;
+// var validator = new Validator();
 
 
 app.use(bodyParser.json());
@@ -38,11 +41,7 @@ app.post('/schema', (req, res) => {
     if(schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
       throw 'Schema is not valid!';
     
-    var room = rooms.find(obj => { return obj.room === roomName })
-    if(room)
-      room.schema = schema;    
-    else 
-      rooms.push({ room: roomName, clients: [], schema: schema })
+    rooms.addSchema(roomName, schema);
     
     res.send('Schema saved!')
   } catch (err) {
