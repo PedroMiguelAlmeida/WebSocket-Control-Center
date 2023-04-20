@@ -13,12 +13,12 @@ app.use(bodyParser.json())
 app.post('/schema', (req, res) => {
   try {
     let schema = req.body.schema
-    let roomName = req.body.room
+    let roomName = req.body.roomName
 
     if(schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
       throw 'Schema is not valid!';
     
-    rooms.addRoom(roomName, { clients: [], schema: schema })
+    rooms.addSchema(roomName,  schema)
     
     res.send('Schema saved!')
   } catch (err) {
@@ -85,23 +85,21 @@ wss.on('connection', function connection(ws: any) {
     try {
       let jsonObj  = JSON.parse(dataString);
       let data = jsonObj as clientData;
-      let schema = rooms.getRoom(data.roomName).schema as Schema;
+
+      //if room does not exist, create it
+      rooms.addClient(data.roomName, ws);
+
       
+      let schema = rooms.getRoom(data.roomName).schema;      
       if(schema){
-        let validateResolve = validator.validate(data.payload.msg, schema);
+        //check if client data is acording to schema
+        let validateResolve = validator.validate(data.payload.msg, schema as Schema);
         if (!validateResolve.valid) {
           ws.send(JSON.stringify({ "type": "error", "room": data.roomName, "payload": { "msg": "Message format is not valid!!" } }))
           throw "Error - validation failed room schema check";
         }
       }
-      
 
-      //room logic
-      if (rooms.roomExists(data.roomName)) {
-        rooms.addClient(data.roomName, ws);
-      } else {
-        rooms.addRoom(data.roomName, { clients: [ws], schema: null });
-      }
       console.log(rooms.getRoom(data.roomName).clients.length + " clients in room " + data.roomName);
 
       rooms.broadcast(data.roomName, data, ws)
@@ -118,9 +116,10 @@ wss.on('connection', function connection(ws: any) {
 
     rooms.removeClientFromAllRooms
     
+    console.log(rooms.getRoom("room1").clients.length + " clients in room 1");
     console.log("Client " + ws.id + " removed from all rooms");
 
   })
 })
 
-server.listen(8080, () => { console.log('Listening on :3000') })
+server.listen(8080, () => { console.log('Api listening on :8080') })

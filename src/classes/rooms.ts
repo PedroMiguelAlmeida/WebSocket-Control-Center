@@ -19,16 +19,18 @@ export default class Rooms {
     this.rooms = roomsData;
   }
 
-  public addRoom(roomName: string, room: Room): void {
+  public addRoom(roomName: string, room: Room): Room {
     this.rooms[roomName] = room;
+    return room;
+  }
+  
+  public getRoom(roomName: string): Room {
+    return this.rooms[roomName];
   }
 
-  public getRoom(roomName: string): Room {
-    const room = this.rooms[roomName];
-    if (!room) {
-      throw `Room ${roomName} does not exist`;
-    }
-    return room;
+  public getOrCreateRoom(roomName: string): Room {
+
+    return this.roomExists(roomName) ? this.getRoom(roomName) : this.addRoom(roomName, { clients: [], schema: null })    
   }
 
   public roomExists(roomName: string): boolean {
@@ -41,10 +43,10 @@ export default class Rooms {
 
   public getAllRooms(): RoomsData {
     return this.rooms;
-  }
+  }  
 
   public addClient(roomName: string, client: object): void {
-    const room = this.getRoom(roomName);
+    const room = this.getOrCreateRoom(roomName);
 
     if (!room.clients.includes(client))
       room.clients.push(client);
@@ -58,11 +60,14 @@ export default class Rooms {
   }
 
   public addSchema(roomName: string, schema: string): void {
-    const room = this.getRoom(roomName);
+    const room = this.getOrCreateRoom(roomName);
     room.schema = schema;
   }
 
   public broadcast(roomName: string, data: clientData, msgClient: object) {
+    if (!this.roomExists) {
+      throw `Room ${roomName} does not exist`;
+    }
     this.getRoom(roomName).clients.forEach(function each(client: any) {
       if (client != msgClient && client.readyState === 1) {
         client.send(JSON.stringify(data.payload.msg))

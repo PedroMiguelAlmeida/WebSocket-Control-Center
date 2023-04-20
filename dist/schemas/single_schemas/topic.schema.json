@@ -1,0 +1,13 @@
+{
+    "$id": "/topic",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+        "name":{
+            "description":"Topic Name",
+            "type":"string",
+            "minLength":4
+        }
+    }
+}

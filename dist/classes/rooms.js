@@ -7,13 +7,13 @@ class Rooms {
     }
     addRoom(roomName, room) {
         this.rooms[roomName] = room;
+        return room;
     }
     getRoom(roomName) {
-        const room = this.rooms[roomName];
-        if (!room) {
-            throw `Room ${roomName} does not exist`;
-        }
-        return room;
+        return this.rooms[roomName];
+    }
+    getOrCreateRoom(roomName) {
+        return this.roomExists(roomName) ? this.getRoom(roomName) : this.addRoom(roomName, { clients: [], schema: null });
     }
     roomExists(roomName) {
         return this.rooms[roomName] !== undefined;
@@ -25,7 +25,7 @@ class Rooms {
         return this.rooms;
     }
     addClient(roomName, client) {
-        const room = this.getRoom(roomName);
+        const room = this.getOrCreateRoom(roomName);
         if (!room.clients.includes(client))
             room.clients.push(client);
     }
@@ -36,10 +36,13 @@ class Rooms {
         });
     }
     addSchema(roomName, schema) {
-        const room = this.getRoom(roomName);
+        const room = this.getOrCreateRoom(roomName);
         room.schema = schema;
     }
     broadcast(roomName, data, msgClient) {
+        if (!this.roomExists) {
+            throw `Room ${roomName} does not exist`;
+        }
         this.getRoom(roomName).clients.forEach(function each(client) {
             if (client != msgClient && client.readyState === 1) {
                 client.send(JSON.stringify(data.payload.msg));
