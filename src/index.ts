@@ -3,10 +3,12 @@ import bodyParser from 'body-parser'
 import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
 import Rooms from './classes/rooms.js'
+import { Schema, Validator } from 'jsonschema'
 
 const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ port: 3001 })
+const validator = new Validator()
 
 app.use(bodyParser.json())
 
@@ -26,39 +28,6 @@ app.post('/schema', (req, res) => {
   }
 })
 console.log("Server listening on :3001")
-let roomSchema = require('./schemas/single_schemas/room.schema.json')
-let dataSchema = require('./schemas/single_schemas/data.schema.json')
-
-import { Schema, Validator } from 'jsonschema';
-var validator = new Validator();
-
-const globalSchema = {
-  "$id": "/final",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["room", "payload"],
-  "properties": {
-    "room": {
-      "description":"Room Name",
-      "type":"string",
-      "minLength":4
-    },
-    "payload": {
-      "type": "object",
-      "required": ["msg"],
-      "properties": {
-        "msg": {
-          "description":"Data",
-          "type":"object"
-        }
-      }
-    }
-  }
-};
-
-validator.addSchema(roomSchema, '/room')
-validator.addSchema(dataSchema, '/data')
-
 
 const rooms = new Rooms({})
 let id:number = 0
@@ -71,7 +40,6 @@ interface clientData {
   }
 }
 
-
 wss.on('connection', function connection(ws: any) {
   id++
   ws.id = id
@@ -80,35 +48,32 @@ wss.on('connection', function connection(ws: any) {
 
   ws.on('open', () => { console.log("Connection opened") })
 
-
   ws.on('message', (dataString: any) => {
     try {
-      let jsonObj  = JSON.parse(dataString);
-      let data = jsonObj as clientData;
+      let jsonObj  = JSON.parse(dataString)
+      let data = jsonObj as clientData
 
       //if room does not exist, create it
-      rooms.addClient(data.roomName, ws);
-
+      rooms.addClient(data.roomName, ws)
       
-      let schema = rooms.getRoom(data.roomName).schema;      
+      let schema = rooms.getRoom(data.roomName).schema
       if(schema){
         //check if client data is acording to schema
-        let validateResolve = validator.validate(data.payload.msg, schema as Schema);
+        let validateResolve = validator.validate(data.payload.msg, schema as Schema)
         if (!validateResolve.valid) {
           ws.send(JSON.stringify({ "type": "error", "room": data.roomName, "payload": { "msg": "Message format is not valid!!" } }))
-          throw "Error - validation failed room schema check";
+          throw "Error - validation failed room schema check"
         }
       }
 
-      console.log(rooms.getRoom(data.roomName).clients.length + " clients in room " + data.roomName);
+      console.log(rooms.getRoom(data.roomName).clients.length + " clients in room " + data.roomName)
 
       rooms.broadcast(data.roomName, data, ws)
-      console.log("Success - msg sent to room!");
+      console.log("Success - msg sent to room!")
     }
     catch (error) {
-      console.error(error);
+      console.error(error)
     }
-
   })
 
   ws.on('close', () => {
@@ -116,8 +81,8 @@ wss.on('connection', function connection(ws: any) {
 
     rooms.removeClientFromAllRooms
     
-    console.log(rooms.getRoom("room1").clients.length + " clients in room 1");
-    console.log("Client " + ws.id + " removed from all rooms");
+    console.log(rooms.getRoom("room1").clients.length + " clients in room 1")
+    console.log("Client " + ws.id + " removed from all rooms")
 
   })
 })

@@ -8,9 +8,11 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const http_1 = require("http");
 const ws_1 = require("ws");
 const rooms_js_1 = __importDefault(require("./classes/rooms.js"));
+const jsonschema_1 = require("jsonschema");
 const app = (0, express_1.default)();
 const server = (0, http_1.createServer)(app);
 const wss = new ws_1.WebSocketServer({ port: 3001 });
+const validator = new jsonschema_1.Validator();
 app.use(body_parser_1.default.json());
 app.post('/schema', (req, res) => {
     try {
@@ -26,35 +28,6 @@ app.post('/schema', (req, res) => {
     }
 });
 console.log("Server listening on :3001");
-let roomSchema = require('./schemas/single_schemas/room.schema.json');
-let dataSchema = require('./schemas/single_schemas/data.schema.json');
-const jsonschema_1 = require("jsonschema");
-var validator = new jsonschema_1.Validator();
-const globalSchema = {
-    "$id": "/final",
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "type": "object",
-    "required": ["room", "payload"],
-    "properties": {
-        "room": {
-            "description": "Room Name",
-            "type": "string",
-            "minLength": 4
-        },
-        "payload": {
-            "type": "object",
-            "required": ["msg"],
-            "properties": {
-                "msg": {
-                    "description": "Data",
-                    "type": "object"
-                }
-            }
-        }
-    }
-};
-validator.addSchema(roomSchema, '/room');
-validator.addSchema(dataSchema, '/data');
 const rooms = new rooms_js_1.default({});
 let id = 0;
 wss.on('connection', function connection(ws) {

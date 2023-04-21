@@ -8,7 +8,7 @@ interface clientData {
 type Room = {
   clients: object[];
   schema: string | null;
-};
+}
 
 type RoomsData = Record<string, Room>;
 
