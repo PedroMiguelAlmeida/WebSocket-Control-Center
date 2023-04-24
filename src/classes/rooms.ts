@@ -27,7 +27,7 @@ export default class Rooms {
   public getRoom(roomName: string): Room {
     return this.rooms[roomName];
   }
-
+  
   public getOrCreateRoom(roomName: string): Room {
 
     return this.roomExists(roomName) ? this.getRoom(roomName) : this.addRoom(roomName, { clients: [], schema: null })    
