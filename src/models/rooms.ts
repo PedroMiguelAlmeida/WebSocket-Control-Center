@@ -1,31 +1,47 @@
-import { db } from '../db.js'
+import { db } from '../db'
 
-type Room = {
+interface ITopics {
+    topicName: string;
+    subscribers: object[];
+    publishers: object[];
+    topicSchema: string | null;
+}
+
+interface IRoom {
     roomName: string;
     clients: object[];
-    schema: string | null;
-  }
-export default class Rooms {
-
-    constructor(){
-        
-    }
-
-    public async getAllRooms(){
-        return await db.collection('rooms').find().toArray();
-    }
- 
-    public async getRoom(roomName: string): Promise<any | null> {
-        console.log(roomName);
-        try{
-            let room = await db.collection('rooms').findOne({roomName : 'room1'})
-            return  room || null
-        }catch(err){
-            console.log(err)
-            return null;
-        }
-        
-    }
-
+    roomSchema: string | null;
+    topics: ITopics[];
 }
+
+export const getRoomByName = async (namespace: string, roomName: string) => {
+    return await db.collection('rooms').findOne({namespace: namespace, "rooms.roomName": roomName})    
+}
+
+export const addRoomToNamespace = async (namespace: string, room: IRoom) => {
+    return await db.collection('rooms').updateOne({namespace: namespace}, {$push: {rooms: room}})
+}
+
+export const updateRoomByName = async (namespace: string, roomName: string, room: IRoom) => {
+    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$set: {"rooms.$": room}})
+}
+
+export const deleteRoomByName = async (namespace: string, roomName: string) => {
+    return await db.collection('rooms').updateOne({namespace: namespace}, {$pull: {rooms: {roomName: roomName}}})
+}
+
+export const addClientToRoom = async (namespace: string, roomName: string, client: object) => {
+    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$push: {"rooms.$.clients": client}})
+}
+
+export const removeClientFromRoom = async (namespace: string, roomName: string, clientId: string) => {
+    console.log(clientId)
+    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$pull: {"rooms.$.clients": {id: clientId}}})
+}
+
+
+
+
+
+
 

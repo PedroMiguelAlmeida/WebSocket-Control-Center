@@ -2,15 +2,15 @@ import express from "express"
 import bodyParser from 'body-parser'
 import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
-import Rooms  from './models/rooms.js'
 import Rooms2  from './classes/rooms.js'
 import { Schema, Validator } from 'jsonschema'
 import { connectToDb, db } from './db.js'
+import router from './routes'
+
 const app = express()
 const server = createServer(app)
 
 const validator = new Validator()
-const roomsModel = new Rooms()
 const rooms2 = new Rooms2({})
 
 //Db
@@ -19,30 +19,8 @@ const rooms2 = new Rooms2({})
 
 //Api
 app.use(bodyParser.json())
-app.get('/rooms', async (_req, res) => {
 
-    console.log("Api get rooms");
-
-    let rooms: any = await roomsModel.getRoom('room1')
-
-    res.status(200).send(rooms)
-})
-
-app.post('/schema', (req, res) => {
-  try {
-    let schema = req.body.schema
-    let roomName = req.body.roomName
-
-    if(schema.$schema !== 'https://json-schema.org/draft/2020-12/schema')
-      throw 'Schema is not valid!';
-    
-    rooms2.addSchema(roomName,  schema)
-    
-    res.send('Schema saved!')
-  } catch (err) {
-    res.status(400).send(err)
-  }
-})
+app.use('/', router())
 
 //Ws
 

@@ -1,5 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const exampleRoom = {
+    namespace: 'namespaceDefault',
+    rooms: [
+        {
+            roomName: 'room1',
+            clients: [{}, {}],
+            schema: null,
+            topics: [
+                {
+                    topicName: 'topic1',
+                    subscribers: [{}, {}],
+                    publishers: [{}]
+                }
+            ]
+        },
+        {
+            roomName: 'room2',
+            clients: [{}, {}],
+            schema: "schema",
+            topics: [
+                {
+                    topicName: 'topic1',
+                    subscribers: [{}, {}],
+                    publishers: [{}]
+                }
+            ]
+        }
+    ]
+};
 class Rooms {
     constructor(roomsData) {
         this.rooms = {};

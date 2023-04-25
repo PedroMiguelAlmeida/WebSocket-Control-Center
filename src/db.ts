@@ -10,6 +10,10 @@ const client = new MongoClient(url);
 export const connectToDb = async (dbName: string = defaultDbName) => {
     const conn = await client.connect();
     db = conn.db(dbName);
+    if(db){
+        console.log(`Connected to db ${dbName}`);
+    }
+    
     return client;
 }
 
