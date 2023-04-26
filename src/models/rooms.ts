@@ -21,7 +21,7 @@ export const getRoomByName = async (namespace: string, roomName: string) => {
 export const addRoomToNamespace = async (namespace: string | null, room: IRoom) => {
     if(!namespace) 
         namespace = 'namespaceDefault'
-    return await db.collection('rooms').updateOne({namespace: namespace}, {$push: {rooms: room}})
+    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": {$ne: room.roomName}}, {$push: {rooms: room}})
 }
 
 export const updateRoomByName = async (namespace: string | null, roomName: string, room: IRoom) => {
@@ -33,11 +33,10 @@ export const deleteRoomByName = async (namespace: string, roomName: string) => {
 }
 
 export const addClientToRoom = async (namespace: string, roomName: string, client: object) => {
-    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$push: {"rooms.$.clients": client}})
+    await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName, "rooms.clients": {$ne: client}}, {$push: {"rooms.$.clients": client}})
 }
 
 export const removeClientFromRoom = async (namespace: string, roomName: string, clientId: string) => {
-    console.log(clientId)
     return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$pull: {"rooms.$.clients": {id: clientId}}})
 }
 
