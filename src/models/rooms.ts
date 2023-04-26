@@ -15,7 +15,7 @@ interface IRoom {
 }
 
 export const getRoomByName = async (namespace: string, roomName: string) => {
-    return await db.collection('rooms').findOne({namespace: namespace, "rooms.roomName": roomName})    
+    return await db.collection('rooms').findOne({namespace: namespace, "rooms.roomName": roomName}, {projection: {"rooms.$": 1}})
 }
 
 export const addRoomToNamespace = async (namespace: string, room: IRoom) => {
