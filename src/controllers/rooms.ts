@@ -1,5 +1,5 @@
 import express from 'express'
-import { getRoomByName, addRoomToNamespace, updateRoomByName, deleteRoomByName, addClientToRoom, removeClientFromRoom } from '../models/rooms'
+import { getRoomByName, addRoomToNamespace, updateRoomByName, deleteRoomByName, addClientToRoom, removeClientFromRoom, updateRoomSchema } from '../models/rooms'
 
 export const getRoom = async (req: express.Request, res: express.Response) => {
     try{
@@ -64,6 +64,19 @@ export const removeClient = async (req: express.Request, res: express.Response) 
         const clientId = req.params.id
 
         const updatedRoom = await removeClientFromRoom(req.params.namespace, req.params.roomName, clientId)
+        
+        return res.status(200).json(updatedRoom)
+        
+    } catch (err: any) {
+        return res.status(400).json({message: err.message})
+    }    
+}
+
+export const patchRoomSchema = async (req: express.Request, res: express.Response) => {
+    try{
+        const schema = req.body
+
+        const updatedRoom = await updateRoomSchema(req.params.namespace, req.params.roomName, schema)
         
         return res.status(200).json(updatedRoom)
         

@@ -18,11 +18,13 @@ export const getRoomByName = async (namespace: string, roomName: string) => {
     return await db.collection('rooms').findOne({namespace: namespace, "rooms.roomName": roomName}, {projection: {"rooms.$": 1}})
 }
 
-export const addRoomToNamespace = async (namespace: string, room: IRoom) => {
+export const addRoomToNamespace = async (namespace: string | null, room: IRoom) => {
+    if(!namespace) 
+        namespace = 'namespaceDefault'
     return await db.collection('rooms').updateOne({namespace: namespace}, {$push: {rooms: room}})
 }
 
-export const updateRoomByName = async (namespace: string, roomName: string, room: IRoom) => {
+export const updateRoomByName = async (namespace: string | null, roomName: string, room: IRoom) => {
     return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$set: {"rooms.$": room}})
 }
 
@@ -38,6 +40,11 @@ export const removeClientFromRoom = async (namespace: string, roomName: string, 
     console.log(clientId)
     return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$pull: {"rooms.$.clients": {id: clientId}}})
 }
+
+export const updateRoomSchema = async (namespace: string, roomName: string, schema: string) => {
+    return await db.collection('rooms').updateOne({namespace: namespace, "rooms.roomName": roomName}, {$set: {"rooms.$.roomSchema": schema}})
+}
+
 
 
 

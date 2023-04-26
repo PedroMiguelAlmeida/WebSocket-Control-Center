@@ -1,5 +1,5 @@
 import express from 'express'
-import { getRoom, addRoom, updateRoom, deleteRoom, removeClient } from '../controllers/rooms'
+import { getRoom, addRoom, updateRoom, deleteRoom, removeClient, patchRoomSchema } from '../controllers/rooms'
 
 
 export default (router: express.Router) => {
@@ -8,4 +8,5 @@ export default (router: express.Router) => {
     router.put('/namespace/:namespace/room/:roomName', updateRoom)
     router.delete('/namespace/:namespace/room/:roomName', deleteRoom)
     router.patch('/namespace/:namespace/room/:roomName/client/:id', removeClient)
+    router.patch('/namespace/:namespace/room/:roomName/schema', patchRoomSchema)
 }
