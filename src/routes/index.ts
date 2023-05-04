@@ -8,7 +8,7 @@ const router = express.Router()
 export default (): express.Router => {
 
     rooms(router)
-    namespace(router)
+    //namespace(router)
 
     return router
 }

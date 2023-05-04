@@ -1,9 +1,12 @@
-import express from 'express'
-import { getRoomByName, addRoomToNamespace, updateRoomByName, deleteRoomByName, addClientToRoom, removeClientFromRoom, updateRoomSchema } from '../models/rooms'
+import {Request, Response, NextFunction} from 'express'
+import * as Room from '../models/rooms'
 
-export const getRoom = async (req: express.Request, res: express.Response) => {
+export const getRoomByName = async (req: Request, res: Response) => {
     try{
-        const room = await getRoomByName(req.params.namespace, req.params.roomName)
+        const room = await Room.getByName(req.params.namespace, req.params.roomName)
+
+        if(!room)
+            return res.status(404).json({message: 'room doesn\'t exist'})
         
         return res.status(200).json(room)
         
@@ -12,20 +15,46 @@ export const getRoom = async (req: express.Request, res: express.Response) => {
     }
 }
 
-export const addRoom = async (req: express.Request, res: express.Response) => {
+export const getRoomByNamespace = async (req: Request, res: Response) => {
     try{
-        const newRoom = await addRoomToNamespace(req.params.namespace, req.body)
+        const rooms = await Room.getByNamespace(req.params.namespace)
+
+        if(!rooms)
+            return res.status(404).json({message: 'namespace doesn\'t exist'})
         
-        return res.status(201).json(newRoom)
+        return res.status(200).json(rooms)
         
     } catch (err: any) {
-        return res.status(400).json({message: err.message})
+        return res.status(404).json({message: err.message})
     }
 }
 
-export const updateRoom = async (req: express.Request, res: express.Response) => {
+export const createRoom = async (req: Request, res: Response, next: NextFunction) => {
     try{
-        const updatedRoom = await updateRoomByName(req.params.namespace, req.params.roomName, req.body)
+        const {roomName, schema} = req.body
+        const namespace = req.params.namespace
+        const clients = [{}]
+
+        if(!roomName)
+            return res.status(400).json({message: 'roomName is required'})
+
+        const room = await Room.getByName(namespace, roomName)
+
+        if(room)
+            return res.status(400).json({message: 'room already exists'})
+            
+        const newRoom = await Room.create({roomName, namespace, clients, schema})
+        
+        return res.status(201).json(newRoom).end()
+    } catch (err: any) {
+        return res.status(404).json({message: err.message})
+    }   
+}
+
+export const updateRoom = async (req: Request, res: Response) => {
+    try{
+
+        const updatedRoom = await Room.update(req.params.namespace, req.params.roomName, req.body)
         
         return res.status(200).json(updatedRoom)
         
@@ -35,9 +64,9 @@ export const updateRoom = async (req: express.Request, res: express.Response) =>
     }
 }
 
-export const deleteRoom = async (req: express.Request, res: express.Response) => {
+export const deleteRoom = async (req: Request, res: Response) => {
     try{
-        const deletedRoom = await deleteRoomByName(req.params.namespace, req.params.roomName)
+        const deletedRoom = await Room.remove(req.params.namespace, req.params.roomName)
         
         return res.status(200).json(deletedRoom)
         
@@ -46,11 +75,11 @@ export const deleteRoom = async (req: express.Request, res: express.Response) =>
     }    
 }
 
-export const addClient = async (req: express.Request, res: express.Response) => {
+export const addClient = async (req: Request, res: Response) => {
     try{
         const client = req.body
 
-        const updatedRoom = await addClientToRoom(req.params.namespace, req.params.roomName, client)
+        const updatedRoom = await Room.addClient(req.params.namespace, req.params.roomName, client)
         
         return res.status(200).json(updatedRoom)
         
@@ -59,11 +88,11 @@ export const addClient = async (req: express.Request, res: express.Response) => 
     }    
 }
 
-export const removeClient = async (req: express.Request, res: express.Response) => {
+export const removeClient = async (req: Request, res: Response) => {
     try{
         const clientId = req.params.id
 
-        const updatedRoom = await removeClientFromRoom(req.params.namespace, req.params.roomName, clientId)
+        const updatedRoom = await Room.removeClient(req.params.namespace, req.params.roomName, clientId)
         
         return res.status(200).json(updatedRoom)
         
@@ -72,11 +101,11 @@ export const removeClient = async (req: express.Request, res: express.Response) 
     }    
 }
 
-export const patchRoomSchema = async (req: express.Request, res: express.Response) => {
+export const patchRoomSchema = async (req: Request, res: Response) => {
     try{
-        const schema = req.body
+        const { schema } = req.body
 
-        const updatedRoom = await updateRoomSchema(req.params.namespace, req.params.roomName, schema)
+        const updatedRoom = await Room.updateSchema(req.params.namespace, req.params.roomName, schema)
         
         return res.status(200).json(updatedRoom)
         

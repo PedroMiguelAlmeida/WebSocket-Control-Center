@@ -1,71 +1,41 @@
 import express from "express"
-import bodyParser from 'body-parser'
 import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
 import Rooms2  from './classes/rooms'
-import Topics from "./models/topics.js";
 import { Schema, Validator } from 'jsonschema'
 import { connectToDb, db } from './db'
 import router from './routes'
+import mongoose from "mongoose"
 
 const app = express()
 const server = createServer(app)
+const mongo_url = "mongodb://127.0.0.1:27017/wsManager";
 
 const validator = new Validator()
-const topicsModel = new Topics();
 const rooms2 = new Rooms2({})
 
-//Db
-connectToDb();
+
 
 //Api
-app.use(bodyParser.json())
+app.use(express.urlencoded({extended: true}))
+app.use(express.json())
 
 app.use('/', router())
 
-
-app.get("/topics/:topicName", async (_req, res) => {
-  let topicName = _req.params.topicName;
-  console.log("Api get topic");
-  let topics: any = await topicsModel.getTopic(topicName);
-  res.status(200).send(topics);
+server.listen(8080, () => {
+  console.log("Api listening on :8080");
 });
 
-app.get("/topics", async (_req, res) => {
-  let topics: any = await topicsModel.getAllTopics();
-  res.status(200).send(topics);
-});
+//Db
+//connectToDb();
+mongoose.Promise = Promise
+mongoose.connect(mongo_url)
+mongoose.connection.on('error', (error: Error) => {console.log(error)})
 
-app.put("/uploadTopicSchema/:topicName", async (_req, res) => {
-  let topicName = _req.params.topicName;
-  let schema = _req.body.schema;
-  let uploadedSchemaRes = await topicsModel.uploadTopicSchema(
-    topicName,
-    schema
-  );
-  res.status(200).send(uploadedSchemaRes);
-});
 
-app.delete("/deleteTopic", async (req, res) => {
-  let topicName = req.body.topicName;
-  topicsModel.deleteTopic(topicName);
-  res.send("Topic deleted");
-});
-
-app.post("/addTopic", (req, res) => {
-  try {
-    let roomName = req.body.roomName;
-    let topicName = req.body.topicName;
-
-    topicsModel.addTopic(roomName, topicName);
-    res.send("Topic saved!");
-  } catch (err) {
-    res.status(400).send(err);
-  }
-});
 
 //Ws
-
+/*
 const wss = new WebSocketServer({ port: 3001 });
 console.log("Server listening on :3001");
 
@@ -139,6 +109,4 @@ wss.on("connection", function connection(ws: any) {
   });
 });
 
-server.listen(8080, () => {
-  console.log("Api listening on :8080");
-});
+*/
