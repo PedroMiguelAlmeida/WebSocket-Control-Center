@@ -1,38 +1,38 @@
 import express from "express"
-import { createServer } from 'http'
-import { WebSocketServer } from 'ws'
-import Rooms2  from './classes/rooms'
-import { Schema, Validator } from 'jsonschema'
-import { connectToDb, db } from './db'
-import router from './routes'
+import { createServer } from "http"
+import { WebSocketServer } from "ws"
+import cookieParser from "cookie-parser"
+import Rooms2 from "./classes/rooms"
+import { Schema, Validator } from "jsonschema"
+import { connectToDb, db } from "./db"
+import router from "./routes"
 import mongoose from "mongoose"
 
 const app = express()
 const server = createServer(app)
-const mongo_url = "mongodb://127.0.0.1:27017/wsManager";
+const mongo_url = "mongodb://127.0.0.1:27017/wsManager"
 
 const validator = new Validator()
 const rooms2 = new Rooms2({})
 
-
-
 //Api
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 app.use(express.json())
 
-app.use('/', router())
+app.use("/api", router())
 
 server.listen(8080, () => {
-  console.log("Api listening on :8080");
-});
+	console.log("Api listening on :8080")
+})
 
 //Db
 //connectToDb();
 mongoose.Promise = Promise
 mongoose.connect(mongo_url)
-mongoose.connection.on('error', (error: Error) => {console.log(error)})
-
-
+mongoose.connection.on("error", (error: Error) => {
+	console.log(error)
+})
 
 //Ws
 /*
