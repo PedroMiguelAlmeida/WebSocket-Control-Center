@@ -1,15 +1,12 @@
-import express from 'express'
-import { getRoomByName, getRoomByNamespace, createRoom, updateRoom, deleteRoom } from '../controllers/rooms'
-
+import express from "express"
+import { getRoomByName, createRoom, updateRoom, deleteRoom, addClientToRoom, removeClientToRoom, updateSchema } from "../controllers/rooms"
 
 export default (router: express.Router) => {
-    router.get('/namespace/:namespace/room/:roomName', getRoomByName)
-    router.get('/namespace/:namespace', getRoomByNamespace)
-    router.post('/namespace/:namespace/room', createRoom)    
-    router.put('/namespace/:namespace/room/:roomName', updateRoom)
-    router.delete('/namespace/:namespace/room/:roomName', deleteRoom)
-    /*
-    router.post('/namespace/:namespace/room/:roomName/client', addClient)
-    router.delete('/namespace/:namespace/room/:roomName/client/:id', removeClient)
-    router.patch('/namespace/:namespace/room/:roomName/schema', patchRoomSchema)*/
+	router.get("/namespaces/:namespace/rooms/:roomName", getRoomByName)
+	router.post("/namespaces/:namespace/rooms", createRoom)
+	router.put("/namespaces/:namespace/rooms/:roomName", updateRoom)
+	router.delete("/namespaces/:namespace/rooms/:roomName", deleteRoom)
+	router.post("/namespaces/:namespace/rooms/:roomName/client", addClientToRoom)
+	router.delete("/namespaces/:namespace/rooms/:roomName/client/:id", removeClientToRoom)
+	router.patch("/namespaces/:namespace/rooms/:roomName/schema", updateSchema)
 }

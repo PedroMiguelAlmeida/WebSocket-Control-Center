@@ -1,9 +1,20 @@
-import express from 'express'
-import { getNamespace, createNewNamespace, updateNamespace, deleteNamespace } from '../controllers/namespace'
+import express from "express"
+import {
+	getAllNamespaces,
+	getNamespace,
+	createNewNamespace,
+	updateNamespace,
+	deleteNamespace,
+	addClientToNamespace,
+	removeClientFromNamespace,
+} from "../controllers/namespace"
 
 export default (router: express.Router) => {
-    router.get('/namespace/:namespace', getNamespace)
-    router.post('/namespace', createNewNamespace)
-    router.put('/namespace/:namespace', updateNamespace)
-    router.delete('/namespace/:namespace', deleteNamespace)
+	router.get("/namespaces", getAllNamespaces)
+	router.get("/namespaces/:namespace", getNamespace)
+	router.post("/namespaces", createNewNamespace)
+	router.put("/namespaces/:namespace", updateNamespace)
+	router.delete("/namespaces/:namespace", deleteNamespace)
+	router.post("/namespaces/:namespace/client/:clientId", addClientToNamespace)
+	router.delete("/namespaces/:namespace/client/:clientId", removeClientFromNamespace)
 }

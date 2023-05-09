@@ -1,9 +1,9 @@
-import mongoose from "mongoose"
+import mongoose, { Document, Model } from "mongoose"
 import bcrypt from "bcrypt"
 
 const SALT_WORK_FACTOR = 10
 
-export interface IUser {
+export interface IUser extends Document {
 	email: string
 	username: string
 	ws: object
@@ -15,16 +15,19 @@ export interface IUser {
 }
 
 // User Config
-const UserSchema = new mongoose.Schema({
-	email: { type: String, required: true, unique: true },
-	username: { type: String, required: true },
-	ws: { type: Object, required: false },
-	auth: {
-		password: { type: String, required: true, select: false },
-		salt: { type: String, select: false },
-		sessionToken: { type: String, select: false },
+const UserSchema = new mongoose.Schema<IUser>(
+	{
+		email: { type: String, required: true, unique: true },
+		username: { type: String, required: true, unique: true },
+		ws: { type: Object, required: false },
+		auth: {
+			password: { type: String, required: true, select: false },
+			salt: { type: String, select: false },
+			sessionToken: { type: String, select: false },
+		},
 	},
-})
+	{ timestamps: true }
+)
 
 UserSchema.pre("save", async function save(next) {
 	if (!this.isModified("auth.password")) return next()
@@ -38,14 +41,14 @@ UserSchema.pre("save", async function save(next) {
 	}
 })
 
-export const UserModel = mongoose.model("User", UserSchema)
+export const User: Model<IUser> = mongoose.model("User", UserSchema)
 
 // User Actions
-export const getAll = () => UserModel.find()
-export const getByUsername = (username: string) => UserModel.findOne({ username })
-export const getByEmail = (email: string) => UserModel.findOne({ email })
-export const getBySessionToken = (sessionToken: string) => UserModel.findOne({ "auth.sessionToken": sessionToken })
-export const getById = (id: string) => UserModel.findById(id)
-export const create = (user: IUser) => new UserModel(user).save().then((user) => user.toObject())
-export const deleteById = (id: string) => UserModel.findOneAndDelete({ _id: id })
-export const updateById = (id: string, values: Record<string, any>) => UserModel.findByIdAndUpdate(id, values)
+export const getAll = () => User.find()
+export const getByUsername = (username: string) => User.findOne({ username })
+export const getByEmail = (email: string) => User.findOne({ email })
+export const getBySessionToken = (sessionToken: string) => User.findOne({ "auth.sessionToken": sessionToken })
+export const getById = (id: string) => User.findById(id)
+export const create = (user: IUser) => new User(user).save().then((user) => user.toObject())
+export const deleteById = (id: string) => User.findOneAndDelete({ _id: id })
+export const updateById = (id: string, values: Record<string, any>) => User.findByIdAndUpdate(id, values)

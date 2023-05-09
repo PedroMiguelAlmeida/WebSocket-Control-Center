@@ -45,16 +45,7 @@ export const register = async (req: express.Request, res: express.Response) => {
 
 		if (existingUser) return res.status(400).json({ error: "Username already exists" }).end()
 
-		const user = await User.create({
-			email,
-			username,
-			ws: {},
-			auth: {
-				password: password,
-				salt: null,
-				sessionToken: null,
-			},
-		})
+		const user = await User.create(req.body)
 
 		return res.status(200).json(user).end()
 	} catch (error) {
