@@ -1,6 +1,7 @@
 import mongoose, { Document, Model, Schema, Types } from "mongoose"
 
 export interface IRoom {
+	[x: string]: any
 	roomName: string
 	clients: Types.Array<mongoose.Types.ObjectId>
 	roomSchema?: string
@@ -8,7 +9,7 @@ export interface IRoom {
 
 export interface INamespace {
 	namespace: string
-	rooms: IRoom[]
+	rooms: Types.Array<IRoom>
 	clients: Types.Array<mongoose.Types.ObjectId>
 }
 
@@ -61,10 +62,8 @@ export const update = async (namespaceName: string, namespace: INamespaceDocumen
 export const remove = async (namespace: String) => await Namespace.deleteOne({ namespace: namespace })
 
 export const addClient = async (namespace: string, clientId: String) => {
-	const ns: any = await getByNamespace(namespace)
-	if (!ns) {
-		throw new Error("Namespace not found")
-	}
+	const ns = await getByNamespace(namespace)
+	if (!ns) throw new Error("Namespace not found")
 	ns.clients.push(clientId)
 	ns.save()
 }

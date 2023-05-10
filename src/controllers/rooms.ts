@@ -25,9 +25,9 @@ export const createRoom = async (req: Request, res: Response, next: NextFunction
 	}
 }
 
-export const updateRoom = async (req: Request, res: Response) => {
+export const updateRoomName = async (req: Request, res: Response) => {
 	try {
-		const updatedRoom = await Room.update(req.params.namespace, req.params.roomName, req.body)
+		const updatedRoom = await Room.updateName(req.params.namespace, req.params.roomName, req.body)
 
 		return res.status(200).json(updatedRoom)
 	} catch (err: any) {
