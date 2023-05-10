@@ -15,6 +15,6 @@ export default (router: express.Router) => {
 	router.post("/namespaces", createNewNamespace)
 	router.put("/namespaces/:namespace", updateNamespace)
 	router.delete("/namespaces/:namespace", deleteNamespace)
-	router.post("/namespaces/:namespace/client/:clientId", addClientToNamespace)
-	router.delete("/namespaces/:namespace/client/:clientId", removeClientFromNamespace)
+	router.post("/namespaces/:namespace/clients/:clientId", addClientToNamespace)
+	router.delete("/namespaces/:namespace/clients/:clientId", removeClientFromNamespace)
 }

@@ -1,7 +1,6 @@
 import mongoose, { Document, Model, Schema, Types } from "mongoose"
 
 export interface IRoom {
-	[x: string]: any
 	roomName: string
 	clients: Types.Array<mongoose.Types.ObjectId>
 	roomSchema?: string
@@ -38,7 +37,7 @@ const NamespaceSchema = new mongoose.Schema(
 
 export const Namespace = mongoose.model<INamespaceDocument>("Namespace", NamespaceSchema)
 
-export const getByNamespace = async (namespace: string) => await Namespace.findOne({ namespace: namespace })
+export const getByNamespace = async (namespace: string) => await Namespace.findOne({ namespace: namespace }).populate("clients")
 
 export const getAll = async () =>
 	await Namespace.aggregate([
@@ -70,9 +69,7 @@ export const addClient = async (namespace: string, clientId: String) => {
 
 export async function removeClient(namespace: string, clientId: String): Promise<void> {
 	const ns = (await getByNamespace(namespace)) as INamespaceDocument
-	if (!ns) {
-		throw new Error("Namespace not found")
-	}
+	if (!ns) throw new Error("Namespace not found")
 	ns.clients.pull(clientId)
 	await ns.save()
 }

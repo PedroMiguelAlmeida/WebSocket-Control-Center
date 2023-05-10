@@ -1,5 +1,6 @@
 import express from "express"
 import * as Namespace from "../models/namespace"
+import * as User from "../models/users"
 
 export const getAllNamespaces = async (req: express.Request, res: express.Response) => {
 	try {
@@ -53,6 +54,9 @@ export const deleteNamespace = async (req: express.Request, res: express.Respons
 
 export const addClientToNamespace = async (req: express.Request, res: express.Response) => {
 	try {
+		const client = await User.exists(req.params.clientId)
+		if (!client) return res.status(404).json({ message: "User doesn't exist" })
+
 		const namespace = await Namespace.addClient(req.params.namespace, req.params.clientId)
 
 		return res.status(200).json(namespace)
@@ -63,6 +67,9 @@ export const addClientToNamespace = async (req: express.Request, res: express.Re
 
 export const removeClientFromNamespace = async (req: express.Request, res: express.Response) => {
 	try {
+		const client = await User.exists(req.params.clientId)
+		if (!client) return res.status(404).json({ message: "User doesn't exist" })
+
 		const namespace = await Namespace.removeClient(req.params.namespace, req.params.clientId)
 
 		return res.status(200).json(namespace)

@@ -48,14 +48,10 @@ export const deleteRoom = async (req: Request, res: Response) => {
 
 export const addClientToRoom = async (req: Request, res: Response) => {
 	try {
-		const { email } = req.body
+		const client = await User.exists(req.params.clientId)
+		if (!client) return res.status(404).json({ message: "User doesn't exist" })
 
-		if (!email) return res.status(400).json({ message: "email is required" })
-
-		const client = await User.getByEmail(email)
-		if (!client) return res.status(404).json({ message: "client doesn't exist" })
-
-		const updatedRoom = await Room.addClient(req.params.namespace, req.params.roomName, client._id)
+		const updatedRoom = await Room.addClient(req.params.namespace, req.params.roomName, req.params.clientId)
 
 		return res.status(200).json(updatedRoom)
 	} catch (err: any) {
@@ -65,9 +61,10 @@ export const addClientToRoom = async (req: Request, res: Response) => {
 
 export const removeClientToRoom = async (req: Request, res: Response) => {
 	try {
-		const clientId = req.params.id
+		const client = await User.exists(req.params.clientId)
+		if (!client) return res.status(404).json({ message: "User doesn't exist" })
 
-		const updatedRoom = await Room.removeClient(req.params.namespace, req.params.roomName, clientId)
+		const updatedRoom = await Room.removeClient(req.params.namespace, req.params.roomName, req.params.clientId)
 
 		return res.status(200).json(updatedRoom)
 	} catch (err: any) {

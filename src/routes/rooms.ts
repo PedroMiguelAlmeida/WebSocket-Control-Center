@@ -6,7 +6,7 @@ export default (router: express.Router) => {
 	router.post("/namespaces/:namespace/rooms", createRoom)
 	router.put("/namespaces/:namespace/rooms/:roomName/name", updateRoomName)
 	router.delete("/namespaces/:namespace/rooms/:roomName", deleteRoom)
-	router.post("/namespaces/:namespace/rooms/:roomName/client", addClientToRoom)
-	router.delete("/namespaces/:namespace/rooms/:roomName/client/:id", removeClientToRoom)
+	router.post("/namespaces/:namespace/rooms/:roomName/clients/:clientId", addClientToRoom)
+	router.delete("/namespaces/:namespace/rooms/:roomName/clients/:clientId", removeClientToRoom)
 	router.patch("/namespaces/:namespace/rooms/:roomName/schema", updateSchema)
 }

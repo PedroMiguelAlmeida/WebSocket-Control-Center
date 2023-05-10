@@ -1,13 +1,10 @@
-import mongoose from "mongoose"
-import { Namespace, INamespace, IRoom, getByNamespace } from "./namespace"
+import { Namespace, INamespace, IRoom, getByNamespace, INamespaceDocument } from "./namespace"
 
 export const getByName = async (namespace: string, roomName: string) => {
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")
 	const room = ns.rooms.find((room: { roomName: string }) => room.roomName === roomName)
-	if (!room) {
-		throw new Error("Room not found")
-	}
+	if (!room) throw new Error("Room not found")
 	return { namespace: ns.namespace, clients: ns.clients, room }
 }
 
@@ -28,9 +25,8 @@ export const updateName = async (namespace: string, roomName: string, newRoomNam
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")
 	const room = ns.rooms.find((room: { roomName: string }) => room.roomName === roomName)
-	if (!room) {
-		throw new Error("Room not found")
-	}
+	if (!room) throw new Error("Room not found")
+
 	room.roomName = newRoomName
 	await ns.save()
 	return ns
@@ -53,9 +49,8 @@ export const addClient = async (namespace: string, roomName: string, clientId: S
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")
 	const room = ns.rooms.find((room: { roomName: string }) => room.roomName === roomName)
-	if (!room) {
-		throw new Error("Room not found")
-	}
+	if (!room) throw new Error("Room not found")
+
 	room.clients.push(clientId)
 	ns.save()
 }
@@ -64,9 +59,8 @@ export const removeClient = async (namespace: string, roomName: string, clientId
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")
 	const room = ns.rooms.find((room: { roomName: string }) => room.roomName === roomName)
-	if (!room) {
-		throw new Error("Room not found")
-	}
+	if (!room) throw new Error("Room not found")
+
 	room.clients.pull(clientId)
 	ns.save()
 }
@@ -75,9 +69,8 @@ export const updateSchema = async (namespace: string, roomName: string, roomSche
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")
 	const room = ns.rooms.find((room: { roomName: string }) => room.roomName === roomName)
-	if (!room) {
-		throw new Error("Room not found")
-	}
+	if (!room) throw new Error("Room not found")
+
 	room.roomSchema = roomSchema
 	ns.save()
 	return ns
