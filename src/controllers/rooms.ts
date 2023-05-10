@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import * as Room from "../models/rooms"
+import * as User from "../models/users"
 
 export const getRoomByName = async (req: Request, res: Response) => {
 	try {
@@ -47,9 +48,14 @@ export const deleteRoom = async (req: Request, res: Response) => {
 
 export const addClientToRoom = async (req: Request, res: Response) => {
 	try {
-		const client = req.body
+		const { email } = req.body
 
-		const updatedRoom = await Room.addClient(req.params.namespace, req.params.roomName, client)
+		if (!email) return res.status(400).json({ message: "email is required" })
+
+		const client = await User.getByEmail(email)
+		if (!client) return res.status(404).json({ message: "client doesn't exist" })
+
+		const updatedRoom = await Room.addClient(req.params.namespace, req.params.roomName, client._id)
 
 		return res.status(200).json(updatedRoom)
 	} catch (err: any) {
