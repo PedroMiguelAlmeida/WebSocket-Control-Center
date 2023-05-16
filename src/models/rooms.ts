@@ -45,6 +45,7 @@ export const remove = async (namespace: string, roomName: string) => {
 	}
 }
 
+
 export const addClient = async (namespace: string, roomName: string, clientId: String) => {
 	const ns = await getByNamespace(namespace)
 	if (!ns) throw new Error("Namespace not found")

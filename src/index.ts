@@ -4,9 +4,9 @@ import { WebSocketServer } from "ws"
 import cookieParser from "cookie-parser"
 import Rooms2 from "./classes/rooms"
 import { Schema, Validator } from "jsonschema"
-import { connectToDb, db } from "./db"
 import router from "./routes"
 import mongoose from "mongoose"
+import cors from "cors"
 
 const app = express()
 const server = createServer(app)
@@ -17,6 +17,7 @@ const rooms2 = new Rooms2({})
 
 //Api
 app.use(express.urlencoded({ extended: true }))
+app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
 
