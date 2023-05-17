@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-
-import { getBySessionToken } from "../models/users"
+import jwt from "jsonwebtoken"
 
 export const isAuth = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -8,11 +7,9 @@ export const isAuth = async (req: Request, res: Response, next: NextFunction) =>
 
 		if (!sessionToken) return res.sendStatus(403)
 
-		const user = await getBySessionToken(sessionToken)
+		const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET as string)
 
-		if (!user) return res.sendStatus(403)
-
-		return res.status(200).json(user).end()
+		return res.status(200).end()
 	} catch (error) {
 		return res.status(400).json(error).end()
 	}

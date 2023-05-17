@@ -53,9 +53,9 @@ export const getAll = async () =>
 
 export const exists = async (namespace: string) => await Namespace.findOne({ namespace: namespace }).select({ _id: 1 }).lean()
 
-export const create = async (namespace: INamespaceDocument) => await new Namespace(namespace).save().then((namespace) => namespace.toObject())
+export const create = async (namespace: INamespace) => await new Namespace(namespace).save().then((namespace) => namespace.toObject())
 
-export const update = async (namespaceName: string, namespace: INamespaceDocument) =>
+export const update = async (namespaceName: string, namespace: INamespace) =>
 	await Namespace.findOneAndUpdate({ namespace: namespaceName }, namespace, { new: true })
 
 export const remove = async (namespace: String) => await Namespace.deleteOne({ namespace: namespace })

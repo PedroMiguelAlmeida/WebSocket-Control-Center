@@ -7,7 +7,8 @@ import {
 	deleteNamespace,
 	addClientToNamespace,
 	removeClientFromNamespace,
-} from "../controllers/namespace"
+	broadcast,
+} from "../controllers/namespaces"
 
 export default (router: express.Router) => {
 	router.get("/namespaces", getAllNamespaces)
@@ -17,4 +18,5 @@ export default (router: express.Router) => {
 	router.delete("/namespaces/:namespace", deleteNamespace)
 	router.post("/namespaces/:namespace/clients/:clientId", addClientToNamespace)
 	router.delete("/namespaces/:namespace/clients/:clientId", removeClientFromNamespace)
+	router.post("/namespaces/:namespace/broadcast", broadcast)
 }
