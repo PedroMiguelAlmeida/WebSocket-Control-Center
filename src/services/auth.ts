@@ -8,7 +8,7 @@ export const loginUser = async (email: string, password: string) => {
 			throw new Error("Missing email or password")
 		}
 
-		const user = await User.getByEmail(email).select("+auth.salt +auth.password")
+		const user = await User.getByEmail(email).select("+password")
 
 		if (!user) throw new Error("User not found")
 
@@ -36,7 +36,7 @@ export const registerUser = async (username: string, password: string, email: st
 			throw new Error("Username already exists")
 		}
 
-		const newUser = await User.create({ email, username, password, ws: null })
+		const newUser = await User.create({ email, username, password } as User.IUser)
 
 		return newUser
 	} catch (err) {

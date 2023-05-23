@@ -1,5 +1,5 @@
 import express from "express"
-import rooms from "./rooms"
+import topics from "./topics"
 import namespace from "./namespace"
 import auth from "./auth"
 import users from "./users"
@@ -7,7 +7,7 @@ import users from "./users"
 const router = express.Router()
 
 export default (): express.Router => {
-	rooms(router)
+	topics(router)
 	namespace(router)
 	auth(router)
 	users(router)

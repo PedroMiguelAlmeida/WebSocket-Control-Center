@@ -1,6 +1,7 @@
 import express from "express"
 import * as Namespace from "../services/namespaces"
 import * as User from "../models/users"
+import { wsClientList } from "../services/websocket"
 
 export const getAllNamespaces = async (req: express.Request, res: express.Response) => {
 	try {
@@ -82,15 +83,17 @@ export const removeClientFromNamespace = async (req: express.Request, res: expre
 
 export const broadcast = async (req: express.Request, res: express.Response) => {
 	try {
-		const { ws } = req.body
+		const msg = req.body.message
+		if (!msg) return res.status(400).json({ message: "Missing message" })
 
-		if (!ws) return res.status(400).json({ message: "Missing websocket" })
+		const clientList = await Namespace.getNamespaceClients(req.params.namespace)
+		if (!clientList) return res.status(404).json({ message: "No clients in namespace" })
 
-		const wsParsed = JSON.parse(ws)
+		clientList.forEach((client: any) => {
+			wsClientList[client].send(msg)
+		})
 
-		wsParsed.send("Test broadcast")
-
-		return res.status(200)
+		return res.status(200).json(clientList)
 	} catch (err: any) {
 		return res.status(500).json({ message: err.message })
 	}

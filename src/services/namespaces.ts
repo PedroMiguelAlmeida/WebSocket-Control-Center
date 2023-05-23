@@ -19,6 +19,17 @@ export const getNamespaceByNamespace = async (namespace: string) => {
 	}
 }
 
+export const getNamespaceClients = async (namespace: string) => {
+	try {
+		const namespaceClients = await Namespace.getNamespaceClients(namespace)
+		if (namespaceClients === null) throw new Error("Namespace not found")
+		if (namespaceClients.clients.length === 0) throw new Error("No clients subed to this namespace")
+		return namespaceClients.clients
+	} catch (err) {
+		throw new Error("Failed to retrieve the namespace clients")
+	}
+}
+
 export const createNamespace = async (namespaceData: Namespace.INamespace) => {
 	try {
 		const newNamespace = await Namespace.create(namespaceData)

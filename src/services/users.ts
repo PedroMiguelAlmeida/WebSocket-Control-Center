@@ -6,6 +6,6 @@ export const getAllUsers = async () => {
 
 		return users
 	} catch (error) {
-		throw new Error("Failed to retrieve the room")
+		throw new Error("Failed to retrieve the topic")
 	}
 }

@@ -1,43 +1,42 @@
 import mongoose, { Document, Model, Schema, Types } from "mongoose"
+import { getNamespace } from "../controllers/namespaces"
 
-export interface IRoom {
-	roomName: string
-	clients: Types.Array<mongoose.Types.ObjectId>
-	roomSchema?: string
+export interface ITopic extends Document {
+	topicName: string
+	clients: Types.Array<Types.ObjectId>
+	topicSchema?: string
 }
 
-export interface INamespace {
+export interface INamespace extends Document {
 	namespace: string
-	rooms: Types.Array<IRoom>
-	clients: Types.Array<mongoose.Types.ObjectId>
+	topics: ITopic[]
+	clients: Types.Array<Types.ObjectId>
 }
 
-export interface INamespaceDocument extends INamespace, Document {
-	createdAt: Date
-	updatedAt: Date
-}
-
-const RoomSchema = new mongoose.Schema(
+const TopicSchema: Schema<ITopic> = new Schema<ITopic>(
 	{
-		roomName: { type: String, required: true },
+		topicName: { type: String, unique: true, required: true },
 		clients: [{ type: Schema.Types.ObjectId, ref: "User" }],
-		roomSchema: { type: String, required: false, default: null },
+		topicSchema: { type: String, required: false, default: null },
 	},
 	{ timestamps: true }
 )
 
-const NamespaceSchema = new mongoose.Schema(
+const NamespaceSchema: Schema<INamespace> = new Schema<INamespace>(
 	{
 		namespace: { type: String, required: true, unique: true },
-		rooms: [RoomSchema],
+		topics: [TopicSchema],
 		clients: [{ type: Schema.Types.ObjectId, ref: "User" }],
 	},
 	{ timestamps: true }
 )
 
-export const Namespace = mongoose.model<INamespaceDocument>("Namespace", NamespaceSchema)
+export const Namespace: Model<INamespace> = mongoose.model<INamespace>("Namespace", NamespaceSchema)
 
-export const getByNamespace = async (namespace: string) => await Namespace.findOne({ namespace: namespace }).populate("clients")
+export const getByNamespace = async (namespace: string) =>
+	await Namespace.findOne({ namespace: namespace }).populate({ path: "topics.clients", model: "User" }).populate({ path: "clients", model: "User" })
+
+export const getNamespaceClients = async (namespace: string) => await Namespace.findOne({ namespace: namespace }, "clients").exec()
 
 export const getAll = async () =>
 	await Namespace.aggregate([
@@ -46,7 +45,7 @@ export const getAll = async () =>
 				_id: 1,
 				namespace: 1,
 				clientsCount: { $size: "$clients" },
-				roomsCount: { $size: "$rooms" },
+				topicsCount: { $size: "$topics" },
 			},
 		},
 	])
@@ -61,15 +60,20 @@ export const update = async (namespaceName: string, namespace: INamespace) =>
 export const remove = async (namespace: String) => await Namespace.deleteOne({ namespace: namespace })
 
 export const addClient = async (namespace: string, clientId: String) => {
-	const ns = await getByNamespace(namespace)
+	const ns = await Namespace.findOne({ namespace: namespace })
 	if (!ns) throw new Error("Namespace not found")
-	ns.clients.push(clientId)
-	ns.save()
+
+	ns.clients.addToSet(clientId)
+	await ns.save()
+	return ns
 }
 
-export async function removeClient(namespace: string, clientId: String): Promise<void> {
-	const ns = (await getByNamespace(namespace)) as INamespaceDocument
+export const removeClient = async (namespace: string, clientId: String) => {
+	const ns = await Namespace.findOne({ namespace: namespace })
 	if (!ns) throw new Error("Namespace not found")
 	ns.clients.pull(clientId)
 	await ns.save()
+	return ns
 }
+
+export const removeClientFromAllNamespaces = async (clientId: String) => {}

@@ -1,42 +1,12 @@
+import express from "express"
+import { getTopicByName, createTopic, updateTopicName, deleteTopic, addClientToTopic, removeClientFromTopic, updateSchema } from "../controllers/topics"
 
-/*
-app.get("/topics/:topicName", async (_req, res) => {
-    let topicName = _req.params.topicName;
-    console.log("Api get topic");
-    let topics: any = await topicsModel.getTopic(topicName);
-    res.status(200).send(topics);
-  });
-  
-  app.get("/topics", async (_req, res) => {
-    let topics: any = await topicsModel.getAllTopics();
-    res.status(200).send(topics);
-  });
-  
-  app.put("/uploadTopicSchema/:topicName", async (_req, res) => {
-    let topicName = _req.params.topicName;
-    let schema = _req.body.schema;
-    let uploadedSchemaRes = await topicsModel.uploadTopicSchema(
-      topicName,
-      schema
-    );
-    res.status(200).send(uploadedSchemaRes);
-    
-  });
-  
-  app.delete("/deleteTopic", async (req, res) => {
-    let topicName = req.body.topicName;
-    topicsModel.deleteTopic(topicName);
-    res.send("Topic deleted");
-  });
-  
-  app.post("/addTopic", (req, res) => {
-    try {
-      let roomName = req.body.roomName;
-      let topicName = req.body.topicName;
-  
-      topicsModel.addTopic(roomName, topicName);
-      res.send("Topic saved!");
-    } catch (err) {
-      res.status(400).send(err);
-    }
-  });*/
+export default (router: express.Router) => {
+	router.get("/namespaces/:namespace/topics/:topicName", getTopicByName)
+	router.post("/namespaces/:namespace/topics", createTopic)
+	router.put("/namespaces/:namespace/topics/:topicName/name", updateTopicName)
+	router.delete("/namespaces/:namespace/topics/:topicName", deleteTopic)
+	router.post("/namespaces/:namespace/topics/:topicName/clients/:clientId", addClientToTopic)
+	router.delete("/namespaces/:namespace/topics/:topicName/clients/:clientId", removeClientFromTopic)
+	router.patch("/namespaces/:namespace/topics/:topicName/schema", updateSchema)
+}

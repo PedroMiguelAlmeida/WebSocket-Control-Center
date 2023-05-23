@@ -1,33 +1,26 @@
-import mongoose, { Document, Model } from "mongoose"
+import mongoose, { Document, Model, Schema } from "mongoose"
 import bcrypt from "bcrypt"
 
 const SALT_WORK_FACTOR = 10
 
-export interface IUser {
+export interface IUser extends Document {
 	email: string
 	username: string
 	password: string
-	ws: object | null
-}
-
-export interface IUserDocument extends IUser, Document {
-	createdAt: Date
-	updatedAt: Date
 }
 
 // User Config
-const UserSchema = new mongoose.Schema(
+const UserSchema: Schema<IUser> = new mongoose.Schema<IUser>(
 	{
 		email: { type: String, required: true, unique: true },
 		username: { type: String, required: true },
 		password: { type: String, required: true, select: false },
-		ws: { type: Object, required: false },
 	},
 	{ timestamps: true }
 )
 
 UserSchema.pre("save", async function save(next) {
-	if (!this.isModified("auth.password")) return next()
+	if (!this.isModified("password")) return next()
 	try {
 		const salt = await bcrypt.genSalt(SALT_WORK_FACTOR)
 		this.password = await bcrypt.hash(this.password, salt)
@@ -37,7 +30,7 @@ UserSchema.pre("save", async function save(next) {
 	}
 })
 
-export const User = mongoose.model<IUserDocument>("User", UserSchema)
+export const User: Model<IUser> = mongoose.model<IUser>("User", UserSchema)
 
 // User Actions
 export const getAll = () => User.find()
