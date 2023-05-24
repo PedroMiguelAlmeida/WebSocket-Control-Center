@@ -43,3 +43,21 @@ export const registerUser = async (username: string, password: string, email: st
 		throw new Error("Failed to register user")
 	}
 }
+
+export const isAuth = async (token: string) => {
+	try {
+		if (!token) throw new Error("Missing token")
+
+		const decoded = jwt.verify(token, process.env.JWT_SECRET as jwt.Secret) as jwt.JwtPayload
+
+		if (!decoded) throw new Error("Invalid token")
+
+		const user = await User.getById(decoded.id)
+
+		if (!user) throw new Error("User not found")
+
+		return user
+	} catch (err) {
+		throw new Error("Failed to authenticate user")
+	}
+}
