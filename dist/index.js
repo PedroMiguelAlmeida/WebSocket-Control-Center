@@ -35,7 +35,6 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const websocket_1 = require("./services/websocket");
 const app = (0, express_1.default)();
-const server = http.createServer(app);
 const mongo_url = "mongodb://127.0.0.1:27017/wsManager";
 mongoose_1.default.Promise = Promise;
 mongoose_1.default.connect(mongo_url);
@@ -48,6 +47,7 @@ app.use((0, cors_1.default)());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use("/api", (0, routes_1.default)());
+const server = http.createServer(app);
 (0, websocket_1.startWSServer)(server);
 server.listen(process.env.PORT, () => {
     console.log(`Server listening in ${process.env.PORT}`);

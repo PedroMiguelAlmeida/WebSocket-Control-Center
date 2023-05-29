@@ -15,7 +15,7 @@ export interface INamespace extends Document {
 
 const TopicSchema: Schema<ITopic> = new Schema<ITopic>(
 	{
-		topicName: { type: String, unique: true, required: true },
+		topicName: { type: String, required: true },
 		clients: [{ type: Schema.Types.ObjectId, ref: "User" }],
 		topicSchema: { type: String, required: false, default: null },
 	},
@@ -52,7 +52,13 @@ export const getAll = async () =>
 
 export const exists = async (namespace: string) => await Namespace.findOne({ namespace: namespace }).select({ _id: 1 }).lean()
 
-export const create = async (namespace: INamespace) => await new Namespace(namespace).save().then((namespace) => namespace.toObject())
+export const create = async (namespace: INamespace) =>
+	await new Namespace(namespace)
+		.save()
+		.then((namespace) => namespace.toObject())
+		.catch((err) => {
+			throw new Error(err)
+		})
 
 export const update = async (namespaceName: string, namespace: INamespace) =>
 	await Namespace.findOneAndUpdate({ namespace: namespaceName }, namespace, { new: true })

@@ -8,7 +8,6 @@ import dotenv from "dotenv"
 import { startWSServer } from "./services/websocket"
 
 const app = express()
-const server = http.createServer(app)
 const mongo_url = "mongodb://127.0.0.1:27017/wsManager"
 
 //Db
@@ -27,6 +26,8 @@ app.use(cookieParser())
 app.use(express.json())
 
 app.use("/api", router())
+
+const server = http.createServer(app)
 
 startWSServer(server)
 

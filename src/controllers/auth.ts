@@ -14,7 +14,7 @@ export const login = async (req: Request, res: Response) => {
 
 		res.cookie("WS-MANAGER-AUTH", sessionToken)
 
-		return res.status(200).json({ message: "Login successful" })
+		return res.status(200).json({ message: "Login successful", token : sessionToken })
 	} catch (err: any) {
 		return res.status(500).json({ message: err.message })
 	}

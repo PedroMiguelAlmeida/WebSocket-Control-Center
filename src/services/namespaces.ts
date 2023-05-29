@@ -35,6 +35,7 @@ export const createNamespace = async (namespaceData: Namespace.INamespace) => {
 		const newNamespace = await Namespace.create(namespaceData)
 		return newNamespace
 	} catch (err) {
+		console.log(err)
 		throw new Error("Failed to create a new namespace")
 	}
 }
