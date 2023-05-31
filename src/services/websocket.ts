@@ -15,6 +15,16 @@ interface clientData {
 	}
 }
 
+interface messageData {
+	type: string
+	payload: {
+		id: string
+		msgDate: Date
+		userName: string
+		msg: string
+	}
+}
+
 export var wsClientList: { [id: string]: any } = {}
 
 export function startWSServer(server: any) {
@@ -22,85 +32,91 @@ export function startWSServer(server: any) {
 	console.log("WS Server start")
 
 	wss.on("connection", async function connection(ws: any, req: IncomingMessage) {
-		const cookies = parseCookies(req.headers.cookie)
-		const user = await isAuth(cookies["WS-MANAGER-AUTH"])
+		try {
+			const cookies = parseCookies(req.headers.cookie)
+			const user = await isAuth(cookies["WS-MANAGER-AUTH"])
 
-		if (!user._id) throw new Error("User not found")
+			if (!user._id) throw new Error("User not found")
 
-		ws.userId = user._id
-		wsClientList[user._id] = ws
+			ws.userId = user._id
+			wsClientList[user._id] = ws
 
-		ws.on("open", () => {
-			console.log("Connection opened")
-		})
+			ws.on("open", () => {
+				console.log("Connection opened")
+			})
 
-		ws.on("message", async (message: string) => {
-			try {
-				let data = JSON.parse(message)
+			ws.on("message", async (message: string) => {
+				try {
+					let data = JSON.parse(message)
 
-				if (!data.namespace) throw new Error("namespace required")
+					if (!data.namespace) throw new Error("namespace required")
 
-				switch (data.type) {
-					case "message":
-						let clients
-						if (data.topicName && data.namespace) {
-							const topic = await Topic.getTopicByName(data.namespace, data.topicName)
-							if (!topic) throw new Error("Topic not found")
-							clients = topic.clients
-						} else {
-							clients = await Namespace.getNamespaceClients(data.namespace)
-						}
-						clients.forEach((client) => {
-							const c = client.toString()
-							if (wsClientList[c] && c !== user._id && wsClientList[c].readyState === 1)
-								wsClientList[c].send(JSON.stringify({ type: "message", payload: { msg: data.payload.msg } }))
-						})
-						ws.send(JSON.stringify({ type: "message", payload: { msg: "Msg sent!" } }))
-						break
-					case "sub-topic":
-						if (!data.topicName) throw new Error("topicName required")
-						Topic.addClientToTopic(data.namespace, data.topicName, user._id).then((topic: ITopic) => {
-							ws.send(JSON.stringify({ type: "message", payload: { msg: "You subed to topic - " + data.topicName } }))
-							broadcast(topic.clients, user._id, "Client " + user._id + " subed to topic - " + data.topicName)
-						})
-						break
-					case "unsub-topic":
-						if (!data.topicName) throw new Error("topicName required")
-						Topic.removeClientFromTopic(data.namespace, data.topicName, user._id).then((topic: ITopic) => {
-							ws.send(JSON.stringify({ type: "message", payload: { msg: "You unsubed from topic - " + data.topicName } }))
-							broadcast(topic.clients, user._id, "Client " + user._id + " unsubed from topic - " + data.topicName)
-						})
-						break
-					case "sub-namespace":
-						Namespace.addClientToNamespace(data.namespace, user._id).then((namespace: INamespace) => {
-							ws.send(JSON.stringify({ type: "message", payload: { msg: "You subed to namespace - " + data.namespace } }))
-							broadcast(namespace.clients, user._id, "Client " + user._id + " subed to namespace - " + data.namespace)
-						})
-						break
-					case "unsub-namespace":
-						Namespace.removeClientFromNamespace(data.namespace, user._id).then((namespace: INamespace) => {
-							ws.send(JSON.stringify({ type: "message", payload: { msg: "You unsubed from namespace - " + data.namespace } }))
-							broadcast(namespace.clients, user._id, "Client " + user._id + " unsubed from namespace - " + data.namespace)
-						})
-						break
+					switch (data.type) {
+						case "message":
+							let clients
+							if (data.topicName && data.namespace) {
+								const topic = await Topic.getTopicByName(data.namespace, data.topicName)
+								if (!topic) throw new Error("Topic not found")
+								clients = topic.clients
+							} else {
+								clients = await Namespace.getNamespaceClients(data.namespace)
+							}
+							ws.send(JSON.stringify({ type: "success", payload: { msg: "Msg sent!" } }))
+							broadcast(clients, user, data.payload.msg, "message")
+							break
+						case "sub-topic":
+							if (!data.topicName) throw new Error("topicName required")
+							Topic.addClientToTopic(data.namespace, data.topicName, user._id).then((topic: ITopic) => {
+								ws.send(JSON.stringify({ type: "success", payload: { msg: "You subed to topic - " + data.topicName } }))
+								broadcast(topic.clients, user, "Client " + user._id + " subed to topic - " + data.topicName, "sub")
+							})
+							break
+						case "unsub-topic":
+							if (!data.topicName) throw new Error("topicName required")
+							Topic.removeClientFromTopic(data.namespace, data.topicName, user._id).then((topic: ITopic) => {
+								ws.send(JSON.stringify({ type: "success", payload: { msg: "You unsubed from topic - " + data.topicName } }))
+								broadcast(topic.clients, user, "Client " + user._id + " unsubed from topic - " + data.topicName, "unsub")
+							})
+							break
+						case "sub-namespace":
+							Namespace.addClientToNamespace(data.namespace, user._id).then((namespace: INamespace) => {
+								ws.send(JSON.stringify({ type: "success", payload: { msg: "You subed to namespace - " + data.namespace } }))
+								broadcast(namespace.clients, user, "Client " + user._id + " subed to namespace - " + data.namespace, "sub")
+							})
+							break
+						case "unsub-namespace":
+							Namespace.removeClientFromNamespace(data.namespace, user._id).then((namespace: INamespace) => {
+								ws.send(JSON.stringify({ type: "success", payload: { msg: "You unsubed from namespace - " + data.namespace } }))
+								broadcast(namespace.clients, user, "Client " + user._id + " unsubed from namespace - " + data.namespace, "unsub")
+							})
+							break
+						case "test":
+							console.log("Test msg received")
+							ws.send(JSON.stringify({ type: "message", payload: { msg: "Test msg response" } }))
+							break
 
-					default:
-						throw new Error("No type in data")
+						default:
+							throw new Error("No type in data")
+					}
+				} catch (err: any) {
+					console.error(err)
+					ws.send(JSON.stringify({ type: "error", payload: { msg: "Error - msg not sent!", err: err.message } }))
 				}
-			} catch (err) {
-				console.error(err)
-				ws.send(JSON.stringify({ type: "error", payload: { msg: "Error - msg not sent to topic!", err: err } }))
-			}
-		})
+			})
 
-		ws.on("close", () => {
-			console.log("Connection closed - Client " + ws.id)
+			ws.on("close", () => {
+				console.log("Connection closed - Client " + ws.id)
 
-			// topics2.removeClientFromAllTopics(ws)
+				// topics2.removeClientFromAllTopics(ws)
 
-			// console.log(topics2.getTopic("topic1").clients.length + " clients in topic 1")
-			// console.log(`Client ${ws.id} removed from all topics`)
-		})
+				// console.log(topics2.getTopic("topic1").clients.length + " clients in topic 1")
+				// console.log(`Client ${ws.id} removed from all topics`)
+			})
+		} catch (err: any) {
+			console.error(err)
+			ws.send(JSON.stringify({ type: "error", payload: { msg: "Error - something went wrong!", err: err.message } }))
+			ws.close()
+		}
 	})
 }
 
@@ -122,10 +138,15 @@ const onSocketError = (err: any) => {
 	console.error(err)
 }
 
-export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: string, msg: string) => {
+export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg: string, msgType: string) => {
 	clients.forEach((client) => {
 		const c = client.toString()
-		if (wsClientList[c] && c !== sender && wsClientList[c].readyState === 1)
-			wsClientList[c].send(JSON.stringify({ type: "message", payload: { msg: msg } }))
+		if (wsClientList[c] && c !== sender.id && wsClientList[c].readyState === 1)
+			wsClientList[c].send(
+				JSON.stringify({
+					type: msgType,
+					payload: { id: "", msgDate: new Date(), userName: sender.username, msg: msg },
+				})
+			)
 	})
 }

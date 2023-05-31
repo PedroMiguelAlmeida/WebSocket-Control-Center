@@ -58,6 +58,6 @@ export const isAuth = async (token: string) => {
 
 		return user
 	} catch (err) {
-		throw new Error("Failed to authenticate user")
+		throw err
 	}
 }
