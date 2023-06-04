@@ -1,5 +1,15 @@
 import express from "express"
-import { getTopicByName, createTopic, updateTopicName, deleteTopic, addClientToTopic, removeClientFromTopic, updateSchema } from "../controllers/topics"
+import {
+	getTopicByName,
+	createTopic,
+	updateTopicName,
+	deleteTopic,
+	addClientToTopic,
+	removeClientFromTopic,
+	updateSchema,
+	broadcast,
+} from "../controllers/topics"
+import { isAuthenticated } from "../middleware"
 
 export default (router: express.Router) => {
 	router.get("/namespaces/:namespace/topics/:topicName", getTopicByName)
@@ -9,4 +19,5 @@ export default (router: express.Router) => {
 	router.post("/namespaces/:namespace/topics/:topicName/clients/:clientId", addClientToTopic)
 	router.delete("/namespaces/:namespace/topics/:topicName/clients/:clientId", removeClientFromTopic)
 	router.patch("/namespaces/:namespace/topics/:topicName/schema", updateSchema)
+	router.post("/namespaces/:namespace/topics/:topicName/broadcast", isAuthenticated, broadcast)
 }

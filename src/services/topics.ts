@@ -1,14 +1,17 @@
 import * as Topic from "../models/topic"
 import * as Namespace from "../models/namespace"
-import * as User from "../models/users"
+import * as User from "../models/user"
+import Ajv, { AnySchema, JSONSchemaType } from "ajv"
 
+const ajv = new Ajv()
 export const getTopicByName = async (namespace: string, topicName: string) => {
 	try {
-		const topic = await Topic.getByName(namespace, topicName)
-
-		return topic
+		const ns = await Topic.getByName(namespace, topicName)
+		if (!ns) throw "Namespace doesnt exist!"
+		if (!ns.topics[0]) throw "Topic doesnt exist in this Namespace!"
+		return ns
 	} catch (err) {
-		throw new Error("Failed to retrieve the topic")
+		throw "Failed to retrieve the topic"
 	}
 }
 
@@ -18,7 +21,7 @@ export const createTopic = async (namespace: string, topicData: Namespace.ITopic
 
 		return newTopic
 	} catch (err) {
-		throw new Error("Failed to create a new topic")
+		throw "Failed to create a new topic"
 	}
 }
 
@@ -28,7 +31,7 @@ export const updateTopicName = async (namespace: string, topicName: string, upda
 
 		return updatedTopic
 	} catch (err) {
-		throw new Error("Failed to update the topic name")
+		throw "Failed to update the topic name"
 	}
 }
 
@@ -38,7 +41,7 @@ export const deleteTopic = async (namespace: string, topicName: string) => {
 
 		return deletedTopic
 	} catch (err) {
-		throw new Error("Failed to delete the topic")
+		throw "Failed to delete the topic"
 	}
 }
 
@@ -46,14 +49,14 @@ export const addClientToTopic = async (namespace: string, topicName: string, cli
 	try {
 		const clientExists = await User.exists(clientId)
 		if (!clientExists) {
-			throw new Error("User doesn't exist")
+			throw "User doesn't exist"
 		}
 
 		const updatedTopic = await Topic.addClient(namespace, topicName, clientId)
 
 		return updatedTopic
 	} catch (err) {
-		throw new Error("Failed to add client to the topic")
+		throw "Failed to add client to the topic"
 	}
 }
 
@@ -61,23 +64,35 @@ export const removeClientFromTopic = async (namespace: string, topicName: string
 	try {
 		const clientExists = await User.exists(clientId)
 		if (!clientExists) {
-			throw new Error("User doesn't exist")
+			throw "User doesn't exist"
 		}
 
 		const updatedTopic = await Topic.removeClient(namespace, topicName, clientId)
 
 		return updatedTopic
 	} catch (err) {
-		throw new Error("Failed to remove client from the topic")
+		throw "Failed to remove client from the topic"
 	}
 }
 
-export const updateTopicSchema = async (namespace: string, topicName: string, schema: string) => {
+export const updateTopicSchema = async (namespace: string, topicName: string, schema: AnySchema) => {
 	try {
-		const updatedTopic = await Topic.updateSchema(namespace, topicName, schema)
+		const valid = ajv.compile(schema)
+		if (!valid) throw "Invalid schema"
 
+		const updatedTopic = await Topic.updateSchema(namespace, topicName, JSON.stringify(schema))
 		return updatedTopic
 	} catch (err) {
-		throw new Error("Failed to update the topic schema")
+		throw err
+	}
+}
+
+export const validateSchemaData = (schema: AnySchema, data: string) => {
+	try {
+		const validate = ajv.compile(schema)
+		const valid = validate(data)
+		return valid
+	} catch (err) {
+		throw err
 	}
 }

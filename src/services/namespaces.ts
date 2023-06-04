@@ -1,5 +1,5 @@
 import * as Namespace from "../models/namespace"
-import * as User from "../models/users"
+import * as User from "../models/user"
 
 export const getAllNamespaces = async () => {
 	try {

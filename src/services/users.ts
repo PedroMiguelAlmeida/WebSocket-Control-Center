@@ -1,4 +1,4 @@
-import * as User from "../models/users"
+import * as User from "../models/user"
 
 export const getAllUsers = async () => {
 	try {

@@ -20,7 +20,7 @@ interface messageData {
 	payload: {
 		id: string
 		msgDate: Date
-		userName: string
+		username: string
 		msg: string
 	}
 }
@@ -55,8 +55,12 @@ export function startWSServer(server: any) {
 						case "message":
 							let clients
 							if (data.topicName && data.namespace) {
-								const topic = await Topic.getTopicByName(data.namespace, data.topicName)
-								if (!topic) throw new Error("Topic not found")
+								const namespace = await Topic.getTopicByName(data.namespace, data.topicName)
+								const topic = namespace.topics[0]
+								if (topic.topicSchema) {
+									const valid = Topic.validateSchemaData(JSON.parse(topic.topicSchema), data.payload.msg)
+									if (!valid) throw new Error("Data does not match the topic schema!")
+								}
 								clients = topic.clients
 							} else {
 								clients = await Namespace.getNamespaceClients(data.namespace)
@@ -106,11 +110,7 @@ export function startWSServer(server: any) {
 
 			ws.on("close", () => {
 				console.log("Connection closed - Client " + ws.id)
-
-				// topics2.removeClientFromAllTopics(ws)
-
-				// console.log(topics2.getTopic("topic1").clients.length + " clients in topic 1")
-				// console.log(`Client ${ws.id} removed from all topics`)
+				delete wsClientList[ws.id]
 			})
 		} catch (err: any) {
 			console.error(err)
@@ -134,10 +134,6 @@ function parseCookies(cookieHeader?: string): { [key: string]: string } {
 	return cookies
 }
 
-const onSocketError = (err: any) => {
-	console.error(err)
-}
-
 export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg: string, msgType: string) => {
 	clients.forEach((client) => {
 		const c = client.toString()
@@ -145,7 +141,7 @@ export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg
 			wsClientList[c].send(
 				JSON.stringify({
 					type: msgType,
-					payload: { id: "", msgDate: new Date(), userName: sender.username, msg: msg },
+					payload: { id: "", msgDate: new Date(), username: sender.username, msg: msg },
 				})
 			)
 	})

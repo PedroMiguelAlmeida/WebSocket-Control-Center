@@ -1,9 +1,9 @@
-import express from "express"
+import { Request, Response, NextFunction } from "express"
 import * as Namespace from "../services/namespaces"
-import * as User from "../models/users"
+import * as User from "../models/user"
 import { wsClientList } from "../services/websocket"
 
-export const getAllNamespaces = async (req: express.Request, res: express.Response) => {
+export const getAllNamespaces = async (req: Request, res: Response) => {
 	try {
 		const namespaces = await Namespace.getAllNamespaces()
 
@@ -13,7 +13,7 @@ export const getAllNamespaces = async (req: express.Request, res: express.Respon
 	}
 }
 
-export const getNamespace = async (req: express.Request, res: express.Response) => {
+export const getNamespace = async (req: Request, res: Response) => {
 	try {
 		const namespace = await Namespace.getNamespaceByNamespace(req.params.namespace)
 
@@ -23,7 +23,7 @@ export const getNamespace = async (req: express.Request, res: express.Response) 
 	}
 }
 
-export const createNewNamespace = async (req: express.Request, res: express.Response) => {
+export const createNewNamespace = async (req: Request, res: Response) => {
 	try {
 		if (!req.body.namespace) return res.status(400).json({ message: "Missing namespace" })
 
@@ -35,7 +35,7 @@ export const createNewNamespace = async (req: express.Request, res: express.Resp
 	}
 }
 
-export const updateNamespace = async (req: express.Request, res: express.Response) => {
+export const updateNamespace = async (req: Request, res: Response) => {
 	try {
 		const updatedNamespace = await Namespace.updateNamespace(req.params.namespace, req.body)
 
@@ -45,7 +45,7 @@ export const updateNamespace = async (req: express.Request, res: express.Respons
 	}
 }
 
-export const deleteNamespace = async (req: express.Request, res: express.Response) => {
+export const deleteNamespace = async (req: Request, res: Response) => {
 	try {
 		const namespace = await Namespace.deleteNamespace(req.params.namespace)
 
@@ -55,7 +55,7 @@ export const deleteNamespace = async (req: express.Request, res: express.Respons
 	}
 }
 
-export const addClientToNamespace = async (req: express.Request, res: express.Response) => {
+export const addClientToNamespace = async (req: Request, res: Response) => {
 	try {
 		const client = await User.exists(req.params.clientId)
 		if (!client) return res.status(404).json({ message: "User doesn't exist" })
@@ -68,7 +68,7 @@ export const addClientToNamespace = async (req: express.Request, res: express.Re
 	}
 }
 
-export const removeClientFromNamespace = async (req: express.Request, res: express.Response) => {
+export const removeClientFromNamespace = async (req: Request, res: Response) => {
 	try {
 		const client = await User.exists(req.params.clientId)
 		if (!client) return res.status(404).json({ message: "User doesn't exist" })
@@ -81,7 +81,7 @@ export const removeClientFromNamespace = async (req: express.Request, res: expre
 	}
 }
 
-export const broadcast = async (req: express.Request, res: express.Response) => {
+export const broadcast = async (req: Request, res: Response) => {
 	try {
 		const msg = req.body.message
 		if (!msg) return res.status(400).json({ message: "Missing message" })
@@ -90,7 +90,7 @@ export const broadcast = async (req: express.Request, res: express.Response) => 
 		if (!clientList) return res.status(404).json({ message: "No clients in namespace" })
 
 		clientList.forEach((client: any) => {
-			wsClientList[client].send(msg)
+			if (wsClientList[client]) wsClientList[client].send(JSON.stringify(msg))
 		})
 
 		return res.status(200).json(clientList)

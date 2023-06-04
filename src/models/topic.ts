@@ -3,6 +3,9 @@ import { Namespace, INamespace, ITopic, getByNamespace /*INamespaceDocument*/ } 
 
 export const getByName = async (namespace: string, topicName: string) => await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
 
+export const getClients = async (namespace: string, topicName: string) =>
+	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, "topics.clients").exec()
+
 export const exists = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, topicName: topicName }).select({ _id: 1 }).lean()
 

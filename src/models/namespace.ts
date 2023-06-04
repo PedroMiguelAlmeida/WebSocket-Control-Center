@@ -81,5 +81,3 @@ export const removeClient = async (namespace: string, clientId: String) => {
 	await ns.save()
 	return ns
 }
-
-export const removeClientFromAllNamespaces = async (clientId: String) => {}
