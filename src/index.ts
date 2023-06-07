@@ -1,11 +1,20 @@
 import express from "express"
-import * as http from "http"
+import http from "http"
 import cookieParser from "cookie-parser"
 import cors from "cors"
 import router from "./routes"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import { startWSServer } from "./services/websocket"
+import { IUser } from "./models/user"
+
+declare global {
+	namespace Express {
+		interface Request {
+			user?: IUser
+		}
+	}
+}
 
 const app = express()
 const mongo_url = "mongodb://127.0.0.1:27017/wsManager"

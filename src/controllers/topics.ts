@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express"
 import * as topicService from "../services/topics"
 import * as User from "../models/user"
 import * as Topic from "../models/topic"
-import { wsClientList } from "../services/websocket"
+import { wsClientList, IMessageData } from "../services/websocket"
 
 export const getTopicByName = async (req: Request, res: Response) => {
 	try {
@@ -91,10 +91,12 @@ export const updateSchema = async (req: Request, res: Response) => {
 	}
 }
 
-export const broadcast = async (req: any, res: Response) => {
+export const broadcast = async (req: Request, res: Response) => {
 	try {
 		const msg = req.body.message
 		if (!msg) return res.status(400).json({ message: "Missing message" })
+
+		const user = req.user
 
 		const namespace = await topicService.getTopicByName(req.params.namespace, req.params.topicName)
 		const topic = namespace.topics[0]
@@ -104,9 +106,10 @@ export const broadcast = async (req: any, res: Response) => {
 			if (!valid) throw new Error("Data does not match the topic schema!")
 		}
 
+		const msgData: IMessageData = { type: "message", payload: { id: "", msgDate: new Date(), username: user!.username, msg: msg } }
 		const clientList = topic.clients
 		clientList.forEach((client: any) => {
-			if (wsClientList[client]) wsClientList[client].send(JSON.stringify(msg))
+			if (wsClientList[client]) wsClientList[client].send(JSON.stringify(msgData))
 		})
 
 		return res.status(200).json(clientList)

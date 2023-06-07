@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import * as Namespace from "../services/namespaces"
 import * as User from "../models/user"
-import { wsClientList } from "../services/websocket"
+import { wsClientList, IMessageData } from "../services/websocket"
 
 export const getAllNamespaces = async (req: Request, res: Response) => {
 	try {
@@ -86,11 +86,13 @@ export const broadcast = async (req: Request, res: Response) => {
 		const msg = req.body.message
 		if (!msg) return res.status(400).json({ message: "Missing message" })
 
+		const user = req.user
+
 		const clientList = await Namespace.getNamespaceClients(req.params.namespace)
 		if (!clientList) return res.status(404).json({ message: "No clients in namespace" })
-
+		const msgData: IMessageData = { type: "message", payload: { id: "", msgDate: new Date(), username: user!.username, msg: msg } }
 		clientList.forEach((client: any) => {
-			if (wsClientList[client]) wsClientList[client].send(JSON.stringify(msg))
+			if (wsClientList[client]) wsClientList[client].send(JSON.stringify(msgData))
 		})
 
 		return res.status(200).json(clientList)

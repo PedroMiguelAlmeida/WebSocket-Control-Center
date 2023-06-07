@@ -1,101 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WSTest</title>
-</head>
-<body>
-    <h1>Real Time Messaging</h1>
-    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
-    <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WSTest</title>
+	</head>
+	<body>
+		<h1>Real Time Messaging</h1>
+		<pre id="messages" style="height: 400px; overflow: scroll"></pre>
+		<!-- <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
     <input type="text" id="roomBox" placeholder="Type the room you want to send the message to here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
-    <!-- <input type="file" id="schema-upload"> -->
-    <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
-</body>
+     <input type="file" id="schema-upload"> 
+    <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button> -->
+	</body>
 
+	<script>
+		;(function () {
+			// const sendBtn = document.querySelector('#send');
+			// const messages = document.querySelector('#messages');
+			// const messageBox = document.querySelector('#messageBox');
+			// const uploadBtn = document.querySelector('#schema-upload');
 
-<script>
-  (function() {
-    const sendBtn = document.querySelector('#send');
-    const messages = document.querySelector('#messages');
-    const messageBox = document.querySelector('#messageBox');
-    // const uploadBtn = document.querySelector('#schema-upload');
+			const url = "ws://localhost:8080"
 
-    let ws;
+			connect = (url, onOpen, onClose, onMessage, onError, onSuccess) => {
+				if (ws) {
+					ws.onerror = ws.onopen = ws.onclose = null
+					ws.close()
+				}
+				let ws = new WebSocket(url)
 
-    function showMessage(message) {
-      messages.textContent += `\n\n${message}`;
-      messages.scrollTop = messages.scrollHeight;
-      messageBox.value = '';  
-    }
+				ws.onopen = () => {
+					if (onOpen) {
+						onOpen()
+					}
+				}
+				ws.onmessage = (data) => {
+					data = JSON.parse(data)
 
-    function identifyMessageType(message) {
-        if (parseInt(message)==message) {
-          return parseInt(message);
-        }
-        if (parseFloat(message)==message) {
-            return parseFloat(message);
-        }
-        //by default message is always a string since messageBox always posts a string.
-        return message; 
-      }
+					if (data.type === "message" && onMessage) {
+						onMessage(data)
+					} else if (data.type === "error" && onError) {
+						onError(data)
+					} else if (data.type === "success" && onSuccess) {
+						onSuccess(data)
+					}
+				}
 
-    function init() {
-      if (ws) {
-        ws.onerror = ws.onopen = ws.onclose = null;
-        ws.close();
-      }
+				ws.onclose = () => {
+					if (onClose) {
+						onClose()
+					}
+				}
 
-      ws = new WebSocket('ws://localhost:3002');
-      ws.onopen = () => {
-        console.log('Connection opened!');
+				return ws
+			}
 
-      }
-      ws.onmessage = ({ data }) => {
-        const parseData = JSON.parse(data.toString());
-        console.log(parseData);
-        if (parseData.type === "error") {
-          alert(parseData.payload.msg);
-          // console.log(data);
-        }
-        else if (parseData.type === "message"){
-          showMessage(parseData.payload.msg);
-        }
-        
-      }
-      console.log(ws);
-      ws.onclose = function() {
-        ws = null;
-      }
-    }
+			publish = (msg, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!msg.namespace) throw 'Message must have a "namespace" property'
+				if (!msg.payload.message) throw 'Message must have a "payload.message" property'
 
-    sendBtn.onclick = function() {
-      if (!ws) {
-        showMessage("No WebSocket connection");
-        return ;
-      }
+				ws.send(
+					JSON.stringify({
+						namespace: msg.namespace,
+						topic: msg.topicName || null,
+						type: "message",
+						payload: {
+							msg: msg.payload.message,
+						},
+					})
+				)
+				callback()
+			}
 
-      // ws.send(messageBox.value);
-      let message = messageBox.value;
-      
-      let identifiedMessage = identifyMessageType(message);
-      console.log(identifiedMessage);
-      console.log(typeof(identifiedMessage));
-        
-      
-      ws.send(JSON.stringify({
-        room: roomBox.value,
-        type: "message",        
-        payload: {
-          msg: identifiedMessage
-        }
-      }));
-      showMessage(identifiedMessage);
-    }
+			subNamespace = (namespace, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
 
-    init();
-  })();
-</script>
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						type: "sub-namespace",
+					})
+				)
+				callback()
+			}
+
+			unsubNamespace = (namespace, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						type: "unsub-namespace",
+					})
+				)
+				callback()
+			}
+
+			subTopic = (namespace, topic, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+				if (!topic) throw 'Message must have a "topic" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						topic: topic,
+						type: "sub-topic",
+					})
+				)
+				callback()
+			}
+
+			unsubTopic = (namespace, topic, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+				if (!topic) throw 'Message must have a "topic" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						topic: topic,
+						type: "unsub-topic",
+					})
+				)
+				callback()
+			}
+		})()
+	</script>
 </html>

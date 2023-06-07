@@ -1,7 +1,11 @@
 import mongoose from "mongoose"
 import { Namespace, INamespace, ITopic, getByNamespace /*INamespaceDocument*/ } from "./namespace"
 
-export const getByName = async (namespace: string, topicName: string) => await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
+export const getByName = async (namespace: string, topicName: string) =>
+	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName })
+		.populate({ path: "clients", model: "User" })
+		.populate({ path: "topics.clients", model: "User" })
+		.exec()
 
 export const getClients = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, "topics.clients").exec()

@@ -6,7 +6,7 @@ import { INamespace, ITopic } from "../models/namespace"
 import { Types } from "mongoose"
 import { isAuth } from "./auth"
 
-interface clientData {
+interface IClientData {
 	type: string
 	namespace: string
 	topicName: string
@@ -15,7 +15,7 @@ interface clientData {
 	}
 }
 
-interface messageData {
+export interface IMessageData {
 	type: string
 	payload: {
 		id: string
@@ -94,11 +94,6 @@ export function startWSServer(server: any) {
 								broadcast(namespace.clients, user, "Client " + user._id + " unsubed from namespace - " + data.namespace, "unsub")
 							})
 							break
-						case "test":
-							console.log("Test msg received")
-							ws.send(JSON.stringify({ type: "message", payload: { msg: "Test msg response" } }))
-							break
-
 						default:
 							throw new Error("No type in data")
 					}
@@ -135,14 +130,9 @@ function parseCookies(cookieHeader?: string): { [key: string]: string } {
 }
 
 export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg: string, msgType: string) => {
+	const msgData: IMessageData = { type: msgType, payload: { id: "", msgDate: new Date(), username: sender.username, msg: msg } }
 	clients.forEach((client) => {
 		const c = client.toString()
-		if (wsClientList[c] && c !== sender.id && wsClientList[c].readyState === 1)
-			wsClientList[c].send(
-				JSON.stringify({
-					type: msgType,
-					payload: { id: "", msgDate: new Date(), username: sender.username, msg: msg },
-				})
-			)
+		if (wsClientList[c] && c !== sender.id && wsClientList[c].readyState === 1) wsClientList[c].send(JSON.stringify(msgData))
 	})
 }
