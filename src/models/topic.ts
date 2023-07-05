@@ -7,6 +7,8 @@ export const getByName = async (namespace: string, topicName: string) =>
 		.populate({ path: "topics.clients", model: "User" })
 		.exec()
 
+export const getByNameUnpop = async (namespace: string, topicName: string) => await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName })
+
 export const getClients = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, "topics.clients").exec()
 

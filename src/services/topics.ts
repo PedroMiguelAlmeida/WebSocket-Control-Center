@@ -15,6 +15,17 @@ export const getTopicByName = async (namespace: string, topicName: string) => {
 	}
 }
 
+export const getTopicByNameUnpop = async (namespace: string, topicName: string) => {
+	try {
+		const ns = await Topic.getByNameUnpop(namespace, topicName)
+		if (!ns) throw "Namespace doesnt exist!"
+		if (!ns.topics[0]) throw "Topic doesnt exist in this Namespace!"
+		return ns
+	} catch (err) {
+		throw "Failed to retrieve the topic"
+	}
+}
+
 export const createTopic = async (namespace: string, topicData: Namespace.ITopic) => {
 	try {
 		const newTopic = await Topic.create(namespace, topicData)
@@ -89,6 +100,7 @@ export const updateTopicSchema = async (namespace: string, topicName: string, sc
 
 export const validateSchemaData = (schema: AnySchema, data: string) => {
 	try {
+		if (typeof data === "string") data = JSON.parse(data)
 		const validate = ajv.compile(schema)
 		const valid = validate(data)
 		return valid

@@ -98,7 +98,7 @@ export const broadcast = async (req: Request, res: Response) => {
 
 		const user = req.user
 
-		const namespace = await topicService.getTopicByName(req.params.namespace, req.params.topicName)
+		const namespace = await topicService.getTopicByNameUnpop(req.params.namespace, req.params.topicName)
 		const topic = namespace.topics[0]
 
 		if (topic.topicSchema) {

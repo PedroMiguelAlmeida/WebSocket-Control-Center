@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WSTest</title>
+	</head>
+	<body>
+		<h1>Test:</h1>
+		<button id="ws-open">Open Connection</button>
+		<button id="ws-close">Close Connection</button>
+		<button id="sub-topic">Sub Topic</button>
+		<div class="input-block" style="margin-top: 1em">
+			<label for="email-input">Email</label>
+			<input type="text" id="email-input" value="user1@test.com" />
+			<label for="pass-input">Password</label>
+			<input type="text" id="pass-input" value="pass" />
+		</div>
+		<div class="input-block" style="margin-top: 1em">
+			<label for="namespace-input">Namespace</label>
+			<input type="text" id="namespace-input" value="namespace1" />
+			<label for="topic-input">Topic</label>
+			<input type="text" id="topic-input" value="topic1" />
+		</div>
+		<div class="input-block" style="margin-top: 1em">
+			<label for="msg-input">Message</label>
+			<input type="text" id="msg-input" value='{ "foo": 1, "bar": "test" }' />
+			<button id="ws-send">Send message</button>
+		</div>
+		<pre id="msg-box" style="height: 20em; overflow: auto; margin-top: 1em"></pre>
+	</body>
+	<script>
+		;(function () {
+			const HEARTBEAT_TIMEOUT = 1000 * 5 + 1000 * 1 // 5 + 1 second
+			const HEARTBEAT_VALUE = 1
+			const msg_box = document.getElementById("msg-box")
+			const wsOpen = document.getElementById("ws-open")
+			const wsClose = document.getElementById("ws-close")
+			const wsSend = document.getElementById("ws-send")
+			const msg_input = document.getElementById("msg-input")
+			const namespace_input = document.getElementById("namespace-input")
+			const topicName_input = document.getElementById("topic-input")
+			const subTopic_input = document.getElementById("sub-topic")
+			const email_input = document.getElementById("email-input")
+			const pass_input = document.getElementById("pass-input")
+
+			const url = "ws://localhost:8080"
+			let ws
+
+			function showMessage(message) {
+				if (!msg_box) {
+					return
+				}
+
+				msg_box.textContent += `\n${message}`
+				msg_box.scrollTop = msg_box?.scrollHeight
+			}
+
+			function onClose() {
+				if (!!ws) {
+					ws.close()
+				}
+				showMessage("WebSocket error")
+			}
+
+			function onOpen() {
+				showMessage("WebSocket connection established")
+			}
+
+			function onMessage(msg) {
+				const msgString = JSON.stringify(msg.payload.msg)
+				showMessage(`Received message: ${msgString}`)
+			}
+
+			function onError(msg) {
+				showMessage(`Received error: ${msg.payload.msg} | ${msg.payload.err}`)
+			}
+
+			function onSuccess(msg) {
+				showMessage(`Received success: ${msg.payload.msg}`)
+			}
+
+			wsOpen.addEventListener("click", () => {
+				console.log("open")
+				let ws = connect(url, email_input.value, pass_input.value, onOpen, onClose, onMessage, onError, onSuccess)
+			})
+			wsClose.addEventListener("click", onClose)
+
+			wsSend.addEventListener("click", () => {
+				const msg = msg_input?.value
+				const namespace = namespace_input?.value
+				const topicName = topicName_input?.value
+
+				if (!msg) return
+
+				if (!ws || ws.readyState !== WebSocket.OPEN) {
+					showMessage("No WebSocket connection")
+					return
+				}
+
+				if (!namespace) return showMessage("No namespace set")
+				if (!topicName) return showMessage("No topic set")
+
+				pubTopic(msg, namespace, topicName, () => {
+					showMessage(`Sent "${msg}"`)
+					//msg_input.value = ""
+				})
+			})
+
+			subTopic_input.addEventListener("click", () => {
+				const namespace = namespace_input?.value
+				const topicName = topicName_input?.value
+
+				if (!ws || ws.readyState !== WebSocket.OPEN) {
+					showMessage("No WebSocket connection")
+					return
+				}
+
+				if (!namespace) return showMessage("No namespace set")
+				if (!topicName) return showMessage("No topic set")
+
+				subTopic(namespace, topicName, () => {
+					showMessage(`Subscribed to ${namespace}/${topicName}`)
+				})
+			})
+
+			//helper
+			connect = (url, email, password, onOpen, onClose, onMessage, onError, onSuccess) => {
+				if (!!ws) {
+					ws.onerror = ws.onopen = ws.onclose = null
+					ws.close()
+				}
+				if (!url) throw "Url is required"
+				if (!email) throw "Email is required"
+				if (!password) throw "Password is required"
+				const base64_auth = window.btoa(email + ":" + password)
+				document.cookie = "WS-MANAGER-LOGIN=" + base64_auth + "; path=/"
+				ws = new WebSocket(url)
+
+				ws.onopen = () => {
+					if (onOpen) onOpen()
+				}
+
+				ws.addEventListener("ping", function (event) {
+					console.log("ping")
+					ws.pong()
+				})
+
+				ws.onmessage = (msg) => {
+					if (isBinary(msg.data)) {
+						heartbeat()
+					} else {
+						console.log(data)
+						if (data.type === "message" && onMessage) {
+							onMessage(data)
+						} else if (data.type === "error" && onError) {
+							onError(data)
+						} else if (data.type === "success" && onSuccess) {
+							onSuccess(data)
+						}
+					}
+				}
+
+				ws.onclose = () => {
+					if (!!ws.pingTimeout) clearTimeout(ws.pingTimeout)
+					if (onClose) onClose()
+				}
+
+				return ws
+			}
+
+			pubNamespace = (msg, namespace, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!msg) throw 'Message must have a "msg" property'
+				if (!namespace) throw 'Message must have a "namespace" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: msg.namespace,
+						type: "message",
+						payload: {
+							msg: msg,
+						},
+					})
+				)
+				callback()
+			}
+
+			pubTopic = (msg, namespace, topicName, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!msg) throw 'Message must have a "msg" property'
+				if (!namespace) throw 'Message must have a "namespace" property'
+				if (!topicName) throw 'Message must have a "topic" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						topicName: topicName,
+						type: "message",
+						payload: {
+							msg: msg,
+						},
+					})
+				)
+				callback()
+			}
+
+			subNamespace = (namespace, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						type: "sub-namespace",
+					})
+				)
+				callback()
+			}
+
+			unsubNamespace = (namespace, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						type: "unsub-namespace",
+					})
+				)
+				callback()
+			}
+
+			subTopic = (namespace, topicName, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+				if (!topicName) throw 'Message must have a "topic" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						topicName: topicName,
+						type: "sub-topic",
+					})
+				)
+				callback()
+			}
+
+			unsubTopic = (namespace, topicName, callback) => {
+				if (!ws) throw "No WebSocket connection"
+				if (!namespace) throw 'Message must have a "namespace" property'
+				if (!topicName) throw 'Message must have a "topic" property'
+
+				ws.send(
+					JSON.stringify({
+						namespace: namespace,
+						topicName: topicName,
+						type: "unsub-topic",
+					})
+				)
+				callback()
+			}
+
+			function heartbeat() {
+				if (!ws) return
+				else if (!!ws.pingTimeout) clearTimeout(ws.pingTimeout)
+
+				ws.pingTimeout = setTimeout(() => {
+					ws.close()
+
+					// business logic for deciding whether or not to reconnect
+				}, HEARTBEAT_TIMEOUT)
+
+				const data = new Uint8Array(1)
+				data[0] = HEARTBEAT_VALUE
+				ws.send(data)
+			}
+
+			function isBinary(obj) {
+				return typeof obj === "object" && Object.prototype.toString.call(obj) === "[object Blob]"
+			}
+			//endregion
+		})()
+	</script>
+</html>

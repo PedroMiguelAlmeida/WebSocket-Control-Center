@@ -4,7 +4,7 @@ import * as Topic from "../services/topics"
 import * as Namespace from "../services/namespaces"
 import { INamespace, ITopic } from "../models/namespace"
 import { Types } from "mongoose"
-import { isAuth } from "./auth"
+import { isAuth, loginUser } from "./auth"
 
 interface IClientData {
 	type: string
@@ -26,15 +26,16 @@ export interface IMessageData {
 }
 
 export var wsClientList: { [id: string]: any } = {}
+const HEARTBEAT_INTERVAL = 1000 * 10 // 10 seconds
+const HEARTBEAT_VALUE = 1
 
 export function startWSServer(server: any) {
 	const wss = new WebSocketServer({ server })
 	console.log("WS Server start")
-
 	wss.on("connection", async function connection(ws: any, req: IncomingMessage) {
 		try {
-			const cookies = parseCookies(req.headers.cookie)
-			const user = await isAuth(cookies["WS-MANAGER-AUTH"])
+			ws.isAlive = true
+			const user = await wsLogin(req)
 
 			if (!user._id) throw new Error("User not found")
 
@@ -45,17 +46,22 @@ export function startWSServer(server: any) {
 				console.log("Connection opened")
 			})
 
-			ws.on("message", async (message: string) => {
-				try {
-					let data = JSON.parse(message)
+			console.log("Client connected: " + user._id + " - " + user.username)
 
+			ws.on("message", async (msg: string, isBinary: any) => {
+				try {
+					if (isBinary && (msg as any)[0] === HEARTBEAT_VALUE) {
+						ws.isAlive = true
+						return
+					}
+					let data = JSON.parse(msg)
 					if (!data.namespace) throw new Error("namespace required")
 
 					switch (data.type) {
 						case "message":
 							let clients
 							if (data.topicName && data.namespace) {
-								const namespace = await Topic.getTopicByName(data.namespace, data.topicName)
+								const namespace = await Topic.getTopicByNameUnpop(data.namespace, data.topicName)
 								const topic = namespace.topics[0]
 								if (topic.topicSchema) {
 									const valid = Topic.validateSchemaData(JSON.parse(topic.topicSchema), data.payload.msg)
@@ -94,6 +100,8 @@ export function startWSServer(server: any) {
 								broadcast(namespace.clients, user, "Client " + user._id + " unsubed from namespace - " + data.namespace, "unsub")
 							})
 							break
+						case "performanceTest":
+							break
 						default:
 							throw new Error("No type in data")
 					}
@@ -106,6 +114,7 @@ export function startWSServer(server: any) {
 			ws.on("close", () => {
 				console.log("Connection closed - Client " + ws.id)
 				delete wsClientList[ws.id]
+				clearInterval(interval)
 			})
 		} catch (err: any) {
 			console.error(err)
@@ -113,6 +122,32 @@ export function startWSServer(server: any) {
 			ws.close()
 		}
 	})
+
+	const interval = setInterval(() => {
+		// console.log('firing interval');
+		wss.clients.forEach((ws: any) => {
+			if (!ws.isAlive) {
+				ws.terminate()
+				return
+			}
+
+			ws.isAlive = false
+			ping(ws)
+		})
+	}, HEARTBEAT_INTERVAL)
+}
+
+const wsLogin = async (req: any) => {
+	const cookies = parseCookies(req.headers.cookie)
+	if (cookies["WS-MANAGER-AUTH"]) return await isAuth(cookies["WS-MANAGER-AUTH"])
+	else if (cookies["WS-MANAGER-LOGIN"]) {
+		let buff = Buffer.from(cookies["WS-MANAGER-LOGIN"], "base64").toString("ascii")
+		let [email, password] = buff.split(":")
+		const token = await loginUser(email, password)
+		return await isAuth(token)
+	} else {
+		throw new Error("Not authorized")
+	}
 }
 
 function parseCookies(cookieHeader?: string): { [key: string]: string } {
@@ -135,4 +170,9 @@ export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg
 		const c = client.toString()
 		if (wsClientList[c] && c !== sender.id && wsClientList[c].readyState === 1) wsClientList[c].send(JSON.stringify(msgData))
 	})
+}
+
+export const ping = (ws: any) => {
+	ws.send(HEARTBEAT_VALUE, { binary: true })
+	console.log("ping")
 }

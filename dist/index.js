@@ -11,14 +11,18 @@ const routes_1 = __importDefault(require("./routes"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const websocket_1 = require("./services/websocket");
+const path_1 = require("path");
 const app = (0, express_1.default)();
 const mongo_url = "mongodb://127.0.0.1:27017/wsManager";
+dotenv_1.default.config();
 mongoose_1.default.Promise = Promise;
 mongoose_1.default.connect(mongo_url);
 mongoose_1.default.connection.on("error", (error) => {
     console.log(error);
 });
-dotenv_1.default.config();
+app.get("/", (req, res, next) => {
+    res.sendFile((0, path_1.resolve)(__dirname, "../index.html"));
+});
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({ origin: true, credentials: true }));
 app.use((0, cookie_parser_1.default)());

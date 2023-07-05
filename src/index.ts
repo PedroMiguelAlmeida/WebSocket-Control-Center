@@ -7,6 +7,7 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import { startWSServer } from "./services/websocket"
 import { IUser } from "./models/user"
+import { resolve } from "path"
 
 declare global {
 	namespace Express {
@@ -18,6 +19,7 @@ declare global {
 
 const app = express()
 const mongo_url = "mongodb://127.0.0.1:27017/wsManager"
+dotenv.config()
 
 //Db
 //connectToDb();
@@ -28,12 +30,13 @@ mongoose.connection.on("error", (error: Error) => {
 })
 
 //Api
-dotenv.config()
+app.get("/", (req, res, next) => {
+	res.sendFile(resolve(__dirname, "../index.html"))
+})
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({ origin: true, credentials: true }))
 app.use(cookieParser())
 app.use(express.json())
-
 app.use("/api", router())
 
 const server = http.createServer(app)

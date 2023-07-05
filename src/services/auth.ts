@@ -14,9 +14,11 @@ export const loginUser = async (email: string, password: string) => {
 
 		const isMatch = await bcrypt.compare(password, user.password)
 
-		if (!isMatch) return null
+		if (!isMatch) throw new Error("Invalid password")
 
 		const sessionToken = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET as string)
+
+		if (!sessionToken) throw new Error("Failed to create session token")
 
 		return sessionToken
 	} catch (err) {
