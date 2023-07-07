@@ -2,12 +2,13 @@ import mongoose from "mongoose"
 import { Namespace, INamespace, ITopic, getByNamespace /*INamespaceDocument*/ } from "./namespace"
 
 export const getByName = async (namespace: string, topicName: string) =>
-	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName })
+	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 })
 		.populate({ path: "clients", model: "User" })
 		.populate({ path: "topics.clients", model: "User" })
 		.exec()
 
-export const getByNameUnpop = async (namespace: string, topicName: string) => await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName })
+export const getByNameUnpop = async (namespace: string, topicName: string) =>
+	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
 
 export const getClients = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, "topics.clients").exec()
@@ -28,7 +29,7 @@ export const create = async (namespace: string, topicData: ITopic): Promise<INam
 }
 
 export const updateName = async (namespace: string, topicName: string, newTopicName: string) => {
-	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
+	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
 	if (!ns) throw new Error("Namespace not found")
 	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
 	ns.topics[0].topicName = newTopicName
@@ -47,28 +48,52 @@ export const remove = async (namespace: string, topicName: string) => {
 }
 
 export const addClient = async (namespace: string, topicName: string, clientId: String): Promise<ITopic> => {
-	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
+	const ns = await Namespace.findOneAndUpdate(
+		{ namespace: namespace, "topics.topicName": topicName },
+		{
+			$addToSet: {
+				clients: clientId,
+				"topics.$.clients": clientId,
+			},
+		},
+		{ new: true }
+	).exec()
 	if (!ns) throw new Error("Namespace not found")
+	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
+	/*const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
+	if (!ns?.namespace) throw new Error("Namespace not found")
 	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
 	ns.clients.addToSet(clientId)
 	ns.topics[0].clients.addToSet(clientId)
-	await ns.save()
+	await ns.save()*/
 	return ns.topics[0]
 }
 
 export const removeClient = async (namespace: string, topicName: string, clientId: String): Promise<ITopic> => {
-	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
+	const ns = await Namespace.findOneAndUpdate(
+		{ namespace: namespace, "topics.topicName": topicName },
+		{
+			$pull: {
+				clients: clientId,
+				"topics.$.clients": clientId,
+			},
+		},
+		{ new: true }
+	).exec()
+	if (!ns) throw new Error("Namespace not found")
+	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
+	/*const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
 	if (!ns) throw new Error("Namespace not found")
 	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
 
 	ns.clients.pull(clientId)
 	ns.topics[0].clients.pull(clientId)
-	await ns.save()
+	await ns.save()*/
 	return ns.topics[0]
 }
 
 export const updateSchema = async (namespace: string, topicName: string, topicSchema: string) => {
-	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }).exec()
+	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
 	if (!ns) throw new Error("Namespace not found")
 	const topic = ns.topics.find((topic: { topicName: string }) => topic.topicName === topicName)
 	if (!topic) throw new Error("Topic not found")

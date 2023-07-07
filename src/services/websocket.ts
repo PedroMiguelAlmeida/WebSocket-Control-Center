@@ -26,7 +26,7 @@ export interface IMessageData {
 }
 
 export var wsClientList: { [id: string]: any } = {}
-const HEARTBEAT_INTERVAL = 1000 * 10 // 10 seconds
+const HEARTBEAT_INTERVAL = 1000 * 5 // 5 seconds
 const HEARTBEAT_VALUE = 1
 
 export function startWSServer(server: any) {
@@ -60,7 +60,7 @@ export function startWSServer(server: any) {
 					switch (data.type) {
 						case "message":
 							let clients
-							if (data.topicName && data.namespace) {
+							if (data.topicName) {
 								const namespace = await Topic.getTopicByNameUnpop(data.namespace, data.topicName)
 								const topic = namespace.topics[0]
 								if (topic.topicSchema) {
@@ -71,6 +71,7 @@ export function startWSServer(server: any) {
 							} else {
 								clients = await Namespace.getNamespaceClients(data.namespace)
 							}
+							if (!clients) throw new Error("No clients found!")
 							ws.send(JSON.stringify({ type: "success", payload: { msg: "Msg sent!" } }))
 							broadcast(clients, user, data.payload.msg, "message")
 							break
@@ -100,10 +101,31 @@ export function startWSServer(server: any) {
 								broadcast(namespace.clients, user, "Client " + user._id + " unsubed from namespace - " + data.namespace, "unsub")
 							})
 							break
-						case "performanceTest":
+						case "startTest":
+							const start = performance.now()
+							console.log("startTime: ", start)
+							if (!data.topicName) throw new Error("topicName required")
+							if (!data.payload.msg) throw new Error("nrTests required")
+							const nrTests = data.payload.msg
+							for (let i = 0; i < nrTests; i++) {
+								await runTest(data.namespace, data.topicName, data.payload.msg)
+							}
+							const time = ((performance.now() - start) / 1000).toFixed(2)
+							console.log("time: ", time)
+							const ns = await Topic.getTopicByNameUnpop(data.namespace, data.topicName)
+							ws.send(
+								JSON.stringify({
+									type: "success",
+									payload: {
+										msg: "Test finished! - " + time + " sec to send " + nrTests + " messenges to " + ns.topics[0].clients.length + " users",
+									},
+								})
+							)
+							break
+						case "endTest":
 							break
 						default:
-							throw new Error("No type in data")
+							throw new Error("Message type not recognised!")
 					}
 				} catch (err: any) {
 					console.error(err)
@@ -114,7 +136,7 @@ export function startWSServer(server: any) {
 			ws.on("close", () => {
 				console.log("Connection closed - Client " + ws.id)
 				delete wsClientList[ws.id]
-				clearInterval(interval)
+				//clearInterval(interval)
 			})
 		} catch (err: any) {
 			console.error(err)
@@ -122,9 +144,10 @@ export function startWSServer(server: any) {
 			ws.close()
 		}
 	})
-
+	/*
 	const interval = setInterval(() => {
 		// console.log('firing interval');
+		
 		wss.clients.forEach((ws: any) => {
 			if (!ws.isAlive) {
 				ws.terminate()
@@ -134,7 +157,7 @@ export function startWSServer(server: any) {
 			ws.isAlive = false
 			ping(ws)
 		})
-	}, HEARTBEAT_INTERVAL)
+	}, HEARTBEAT_INTERVAL)*/
 }
 
 const wsLogin = async (req: any) => {
@@ -164,7 +187,7 @@ function parseCookies(cookieHeader?: string): { [key: string]: string } {
 	return cookies
 }
 
-export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg: string, msgType: string) => {
+export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg: any, msgType: string) => {
 	const msgData: IMessageData = { type: msgType, payload: { id: "", msgDate: new Date(), username: sender.username, msg: msg } }
 	clients.forEach((client) => {
 		const c = client.toString()
@@ -175,4 +198,9 @@ export const broadcast = (clients: Types.Array<Types.ObjectId>, sender: any, msg
 export const ping = (ws: any) => {
 	ws.send(HEARTBEAT_VALUE, { binary: true })
 	console.log("ping")
+}
+
+async function runTest(namespace: string, topicName: string, msg: any) {
+	const ns = await Topic.getTopicByNameUnpop(namespace, topicName)
+	broadcast(ns.topics[0].clients, "", msg, "message")
 }

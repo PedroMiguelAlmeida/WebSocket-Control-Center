@@ -14,3 +14,12 @@ export const isAuthenticated = async (req: any, res: Response, next: NextFunctio
 		return res.status(400).json(error)
 	}
 }
+
+export const isAdmin = async (req: any, res: Response, next: NextFunction) => {
+	try {
+		if (req.user.role !== "admin") return res.sendStatus(403)
+		return next()
+	} catch (error) {
+		return res.status(400).json(error)
+	}
+}
