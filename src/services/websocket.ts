@@ -35,10 +35,10 @@ export function startWSServer(server: any) {
 	wss.on("connection", async function connection(ws: any, req: IncomingMessage) {
 		try {
 			ws.isAlive = true
+			console.log("req", req)
 			const user = await wsLogin(req)
-
+			console.log("user", user)
 			if (!user._id) throw new Error("User not found")
-
 			ws.userId = user._id
 			wsClientList[user._id] = ws
 
@@ -108,7 +108,7 @@ export function startWSServer(server: any) {
 							if (!data.payload.msg) throw new Error("nrTests required")
 							const nrTests = data.payload.msg
 							for (let i = 0; i < nrTests; i++) {
-								await runTest(data.namespace, data.topicName, data.payload.msg)
+								await runTest(data.namespace, data.topicName, { foo: 1, bar: "test" })
 							}
 							const time = ((performance.now() - start) / 1000).toFixed(2)
 							console.log("time: ", time)

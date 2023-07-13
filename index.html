@@ -31,7 +31,7 @@
 		</div>
 		<div class="input-block" style="margin-top: 1em">
 			<label for="msg-input">Message</label>
-			<input type="text" id="msg-input" value='{ "foo": 1, "bar": "test" }' />
+			<input type="text" id="msg-input" value='{ "foo": "test", "bar": 1 }' />
 			<button id="ws-send">Send message</button>
 		</div>
 		<pre id="msg-box" style="height: fit-content; overflow: auto; margin-top: 1em"></pre>
@@ -54,7 +54,7 @@
 			const email_input = document.getElementById("email-input")
 			const pass_input = document.getElementById("pass-input")
 
-			const url = "ws://localhost:3000"
+			const url = "ws://localhost:3001"
 			let ws
 
 			function showMessage(message) {
@@ -343,7 +343,7 @@
 							topicName: "topic1",
 							type: "startTest",
 							payload: {
-								msg: "1000000",
+								msg: "10000",
 							},
 						})
 					)

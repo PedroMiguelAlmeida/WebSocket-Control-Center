@@ -60,12 +60,6 @@ export const addClient = async (namespace: string, topicName: string, clientId: 
 	).exec()
 	if (!ns) throw new Error("Namespace not found")
 	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
-	/*const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
-	if (!ns?.namespace) throw new Error("Namespace not found")
-	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
-	ns.clients.addToSet(clientId)
-	ns.topics[0].clients.addToSet(clientId)
-	await ns.save()*/
 	return ns.topics[0]
 }
 
@@ -81,24 +75,12 @@ export const removeClient = async (namespace: string, topicName: string, clientI
 		{ new: true }
 	).exec()
 	if (!ns) throw new Error("Namespace not found")
-	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
-	/*const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
-	if (!ns) throw new Error("Namespace not found")
-	if (ns.topics.length === 0) throw new Error("Topic not found in namespace")
-
-	ns.clients.pull(clientId)
-	ns.topics[0].clients.pull(clientId)
-	await ns.save()*/
 	return ns.topics[0]
 }
 
 export const updateSchema = async (namespace: string, topicName: string, topicSchema: string) => {
-	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicName }, { "topics.$": 1, namespace: 1 }).exec()
-	if (!ns) throw new Error("Namespace not found")
-	const topic = ns.topics.find((topic: { topicName: string }) => topic.topicName === topicName)
-	if (!topic) throw new Error("Topic not found")
-
-	topic.topicSchema = topicSchema
-	await ns.save()
+	const ns = Namespace.findOneAndUpdate({ namespace: namespace, "topics.topicName": topicName }, { $set: { schema: topicSchema } }, { new: true })
+		.select({ topics: { $elemMatch: { topicName: topicName } } })
+		.exec()
 	return ns
 }
