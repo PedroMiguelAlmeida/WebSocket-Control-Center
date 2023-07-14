@@ -16,7 +16,7 @@ export const getClients = async (namespace: string, topicName: string) =>
 export const exists = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, topicName: topicName }).select({ _id: 1 }).lean()
 
-export const create = async (namespace: string, topicData: ITopic): Promise<ITopic> => {
+export const create = async (namespace: string, topicData: ITopic): Promise<INamespace> => {
 	const ns = await Namespace.findOne({ namespace: namespace }).exec()
 	if (!ns) throw new Error("Namespace not found")
 	const topicExists = ns.topics.some((topic) => topic.topicName === topicData.topicName)
@@ -25,7 +25,9 @@ export const create = async (namespace: string, topicData: ITopic): Promise<ITop
 	ns.save().catch((err) => {
 		throw new Error(err)
 	})
-	return topicData
+	//get topic from namespace by name
+	const topic = ns.topics.find((topic) => topic.topicName === topicData.topicName)
+	return ns
 }
 
 export const updateName = async (namespace: string, topicName: string, newTopicName: string) => {
