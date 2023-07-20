@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 
 import * as authService from "../services/auth"
+import * as User from "../models/user"
 
 export const login = async (req: Request, res: Response) => {
 	try {
@@ -14,7 +15,9 @@ export const login = async (req: Request, res: Response) => {
 
 		res.cookie("WS-MANAGER-AUTH", sessionToken)
 
-		return res.status(200).json({ message: "Login successful", token : sessionToken })
+		const user = await User.getByEmail(email).select("-createdAt -updatedAt").exec()
+
+		return res.status(200).json({ token: sessionToken, user: user })
 	} catch (err: any) {
 		return res.status(500).json({ message: err.message })
 	}
