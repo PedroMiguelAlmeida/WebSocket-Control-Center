@@ -106,12 +106,17 @@
 				}
 
 				if (!namespace) return showMessage("No namespace set")
-				if (!topicName) return showMessage("No topic set")
-
-				pubTopic(msg, namespace, topicName, () => {
-					showMessage(`Sent "${msg}"`)
-					//msg_input.value = ""
-				})
+				if (topicName) {
+					pubTopic(msg, namespace, topicName, () => {
+						showMessage(`Sent "${msg}"`)
+						//msg_input.value = ""
+					})
+				} else {
+					pubNamespace(msg, namespace, () => {
+						showMessage(`Sent "${msg}"`)
+						//msg_input.value = ""
+					})
+				}
 			})
 			subTopic_btt.addEventListener("click", () => {
 				const namespace = namespace_input?.value
@@ -231,7 +236,7 @@
 
 					ws.send(
 						JSON.stringify({
-							namespace: msg.namespace,
+							namespace: namespace,
 							type: "message",
 							payload: {
 								msg: msg,

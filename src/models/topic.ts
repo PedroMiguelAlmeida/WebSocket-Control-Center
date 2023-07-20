@@ -25,8 +25,6 @@ export const create = async (namespace: string, topicData: ITopic): Promise<INam
 	ns.save().catch((err) => {
 		throw new Error(err)
 	})
-	//get topic from namespace by name
-	const topic = ns.topics.find((topic) => topic.topicName === topicData.topicName)
 	return ns
 }
 

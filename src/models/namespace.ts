@@ -52,13 +52,12 @@ export const getAll = async () =>
 
 export const exists = async (namespace: string) => await Namespace.findOne({ namespace: namespace }).select({ _id: 1 }).lean()
 
-export const create = async (namespace: INamespace) =>
-	await new Namespace(namespace)
-		.save()
-		.then((namespace) => namespace.toObject())
-		.catch((err) => {
-			throw new Error(err)
-		})
+export const create = async (namespace: INamespace) => {
+	let ns: any = await new Namespace(namespace).save()
+	ns["clientsCount"] = ns.clients.length || 0
+	ns["topicsCount"] = ns.topics.length || 0
+	return ns
+}
 
 export const update = async (namespaceName: string, namespace: INamespace) =>
 	await Namespace.findOneAndUpdate({ namespace: namespaceName }, namespace, { new: true })
