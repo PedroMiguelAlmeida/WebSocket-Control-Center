@@ -16,15 +16,24 @@ export const getClients = async (namespace: string, topicName: string) =>
 export const exists = async (namespace: string, topicName: string) =>
 	await Namespace.findOne({ namespace: namespace, topicName: topicName }).select({ _id: 1 }).lean()
 
-export const create = async (namespace: string, topicData: ITopic): Promise<INamespace> => {
-	const ns = await Namespace.findOne({ namespace: namespace }).exec()
-	if (!ns) throw new Error("Namespace not found")
-	const topicExists = ns.topics.some((topic) => topic.topicName === topicData.topicName)
-	if (topicExists) throw new Error("Topic already exists")
-	ns.topics.push(topicData)
-	ns.save().catch((err) => {
-		throw new Error(err)
-	})
+export const create = async (namespace: string, topicData: ITopic): Promise<any> => {
+	const ns = await Namespace.findOne({ namespace: namespace, "topics.topicName": topicData.topicName })
+		.then((existingNamespace: any) => {
+			if (existingNamespace) {
+				// If the topic already exists, return an error
+				throw new Error("Topic already exists in the namespace.")
+			} else {
+				// If the topic doesn't exist, add it to the topics array
+				return Namespace.findOneAndUpdate({ namespace: namespace }, { $addToSet: { topics: topicData } }, { new: true })
+					.populate({ path: "clients", model: "User" })
+					.populate({ path: "topics.clients", model: "User" })
+					.exec()
+			}
+		})
+		.catch((error: any) => {
+			// Handle the error here
+			throw new Error(error.message)
+		})
 	return ns
 }
 
