@@ -42,7 +42,7 @@ export const getAll = async () =>
 	await Namespace.aggregate([
 		{
 			$project: {
-				_id: 1,
+				_id: 0,
 				namespace: 1,
 				clientsCount: { $size: "$clients" },
 				topicsCount: { $size: "$topics" },
@@ -54,7 +54,7 @@ export const exists = async (namespace: string) => await Namespace.findOne({ nam
 
 export const create = async (namespace: INamespace) => {
 	const ns: any = await new Namespace(namespace).save()
-	return await Namespace.aggregate([
+	const new_ns = await Namespace.aggregate([
 		{ $match: { _id: ns._id } },
 		{
 			$project: {
@@ -65,6 +65,7 @@ export const create = async (namespace: INamespace) => {
 			},
 		},
 	]).exec()
+	return new_ns[0]
 }
 
 export const update = async (namespaceName: string, namespace: INamespace) =>
