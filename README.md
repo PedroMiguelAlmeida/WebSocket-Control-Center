@@ -118,35 +118,35 @@ Admins can call the expressJS RESTful api, we decided to perform this actions th
 
 #### API Table Namespaces
 
-| Function  | Endpoint                     | Description                |
-| :-------- | :-------                     :------------------------- |
-| GET       | api/namespaces/<namespace>   | Get a namespace |
-GET         | api/namespaces               | Get all namespaces |
-POST        | api/namespaces               | Create a namespace
-PUT         | api/namespaces/<namespace>   | Update a namespace |
-DELETE      | api/namespaces/<namespace>   | Deletes a namespace |
-POST        | api/namspaces/<namespace>/clients/<clientId> | Add a client to namespace
-| DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from namespace |
-POST | api/namespaces/<namespace>/broadcast | Sends a message to all clients within the namespace
+ | Function  | Endpoint                     | Description                |
+ | :-------- | :-------                     :------------------------- |
+ | GET       | api/namespaces/<namespace>   | Get a namespace |
+ | GET         | api/namespaces               | Get all namespaces |
+ | POST        | api/namespaces               | Create a namespace
+ | PUT         | api/namespaces/<namespace>   | Update a namespace |
+ | DELETE      | api/namespaces/<namespace>   | Deletes a namespace |
+ | POST        | api/namspaces/<namespace>/clients/<clientId> | Add a client to namespace
+ | DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from namespace |
+ | POST | api/namespaces/<namespace>/broadcast | Sends a message to all clients within the namespace
 
 #### API  Table Topics
 
-| Function  | Endpoint                     | Description                |
-| :-------- | :-------                     :------------------------- |
-| GET       | api/namespaces/<namespace>/topics/<topicName>   | Get a topic within the namespace |
-GET         | api/namespaces/<namespace>/topics               | Get all topics within the namespace |
-POST        | api/namespaces/<namespace>/topics              | Create a topic within the namespace
-PATCH         | api/namespaces/<namespace>/topics/<topicName>   | Updates topic name |
-DELETE      | api/namespaces/<namespace>/topics/<topicName>   | Delete topic from this namespace |
-POST        | api/namspaces/<namespace>/topics/<topicName>/clients/<clientId>  | Add a client to topic |
-| DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from topic |
-PATCH | api/namespaces/<namespace>/topics/<topicName>/schema | Updates topic schema |
-POST | api/namespaces/<namespace>/topics/<topicName>/broadcast | Sends message to all clients within this topic
+ | Function  | Endpoint                     | Description                |
+ | :-------- | :-------                     :------------------------- |
+ | GET       | api/namespaces/<namespace>/topics/<topicName>   | Get a topic within the namespace |
+ | GET         | api/namespaces/<namespace>/topics               | Get all topics within the namespace |
+ | POST        | api/namespaces/<namespace>/topics              | Create a topic within the namespace
+ | PATCH         | api/namespaces/<namespace>/topics/<topicName>   | Updates topic name |
+ | DELETE      | api/namespaces/<namespace>/topics/<topicName>   | Delete topic from this namespace |
+ | POST        | api/namspaces/<namespace>/topics/<topicName>/clients/<clientId>  | Add a client to topic |
+ | DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from topic |
+ | PATCH | api/namespaces/<namespace>/topics/<topicName>/schema | Updates topic schema |
+ | POST | api/namespaces/<namespace>/topics/<topicName>/broadcast | Sends message to all clients within this topic
 
 ### API Auth Table
 
-| Function  | Endpoint                     | Description                |
-| :-------- | :-------                     :------------------------- |
-| POST | api/auth/login | Validates user e-mail and password, answering with a token |
-POST | api/auth/register | Create a user
+ | Function  | Endpoint                     | Description                |
+ | :-------- | :-------                     :------------------------- |
+ | POST | api/auth/login | Validates user e-mail and password, answering with a token |
+ | POST | api/auth/register | Create a user
 
