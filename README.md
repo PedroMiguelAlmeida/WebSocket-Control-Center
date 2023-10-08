@@ -80,29 +80,39 @@ Compile the project:
 ### Websocket Lifecycle
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/WSLifeCycle.png?raw=true)
 
+<br/>
+
 ### System Architecture
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/ArquiteturaSistema.drawio.png?raw=true)
+
+<br/>
 
 ### Comunication Architecture
 
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/ArquiteturaComunicacao.drawio.png?raw=true)
 
+<br/>
+
 ### Architecture Stack
 
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/ArqTechStack.drawio.png?raw=true)
+<br/>
 
 ### Class Diagram
 
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/ClassDiagram.png?raw=true)
+<br/>
 
 ### Sending Data Sequence diagram
 
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/SendingData.drawio.png?raw=true)
+<br/>
 
 
 ### Example of SDK process
 
 ![App Screenshot](https://github.com/PedroMiguelAlmeida/WebSocket-Control-Center/blob/main/Screenshots/SequenceDiagram-WebsocketSDK.drawio.png?raw=true)
+<br/>
 
 For more diagrams on project processes refer to the Screenshots directory in the project folder.
 
@@ -118,8 +128,8 @@ Admins can call the expressJS RESTful api, we decided to perform this actions th
 
 #### API Table Namespaces
 
- | Function  | Endpoint                     | Description                |
- | :-------- | :-------                     :------------------------- |
+ | Function  | Endpoint| Description                |
+ | :-------- | :-------|:------------------------- |
  | GET       | api/namespaces/<namespace>   | Get a namespace |
  | GET         | api/namespaces               | Get all namespaces |
  | POST        | api/namespaces               | Create a namespace
@@ -127,12 +137,12 @@ Admins can call the expressJS RESTful api, we decided to perform this actions th
  | DELETE      | api/namespaces/<namespace>   | Deletes a namespace |
  | POST        | api/namspaces/<namespace>/clients/<clientId> | Add a client to namespace
  | DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from namespace |
- | POST | api/namespaces/<namespace>/broadcast | Sends a message to all clients within the namespace
+ | POST | api/namespaces/<namespace>/broadcast | Sends a message to all clients within the namespace |
 
 #### API  Table Topics
 
- | Function  | Endpoint                     | Description                |
- | :-------- | :-------                     :------------------------- |
+ | Function  | Endpoint | Description|
+ | :-------- | :-------| :------------------------- |
  | GET       | api/namespaces/<namespace>/topics/<topicName>   | Get a topic within the namespace |
  | GET         | api/namespaces/<namespace>/topics               | Get all topics within the namespace |
  | POST        | api/namespaces/<namespace>/topics              | Create a topic within the namespace
@@ -141,12 +151,12 @@ Admins can call the expressJS RESTful api, we decided to perform this actions th
  | POST        | api/namspaces/<namespace>/topics/<topicName>/clients/<clientId>  | Add a client to topic |
  | DELETE | api/namespaces/<namespace>/clients/<clientId> | Removes a client from topic |
  | PATCH | api/namespaces/<namespace>/topics/<topicName>/schema | Updates topic schema |
- | POST | api/namespaces/<namespace>/topics/<topicName>/broadcast | Sends message to all clients within this topic
+ | POST | api/namespaces/<namespace>/topics/<topicName>/broadcast | Sends message to all clients within this topic |
 
 ### API Auth Table
 
- | Function  | Endpoint                     | Description                |
- | :-------- | :-------                     :------------------------- |
+ | Function  | Endpoint| Description                |
+ | :-------- | :-------|:------------------------- |
  | POST | api/auth/login | Validates user e-mail and password, answering with a token |
- | POST | api/auth/register | Create a user
+ | POST | api/auth/register | Create a user |
 
